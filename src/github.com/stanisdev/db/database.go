@@ -17,6 +17,7 @@ func Connect()  {
     if err != nil {
       panic("failed to connect database")
     }
+    con.LogMode(true)
     instance = &manager{Connection: con}
   }
 }

@@ -2,25 +2,42 @@ package core
 
 import (
   m "github.com/stanisdev/models"
-  "github.com/stanisdev/db"
+  "github.com/jinzhu/gorm"
+  "net/http"
+  "time"
+  "fmt"
 )
 
-func SessionStart()  {
-  con := db.GetConnection()
-  con.AutoMigrate(&m.SessionCookieKey{}, &m.SessionData{})
-  con.Model(&m.SessionData{}).AddForeignKey("session_cookie_key_id", "session_cookie_keys(id)", "CASCADE", "CASCADE")
+type SessionManager struct {
+  DB *gorm.DB
+  Sid string
+}
 
-  session := m.SessionCookieKey{
-    CookieName: "cookie-uniq-id",
-    SessionDatas: []m.SessionData{{Key: "name", Value: "John"}},
+func (s *SessionManager) Start(w http.ResponseWriter, r *http.Request) {
+  s.DB.AutoMigrate(&m.SessionCookieKey{}, &m.SessionData{})
+  s.DB.Model(&m.SessionData{}).AddForeignKey("session_cookie_key_id", "session_cookie_keys(id)", "CASCADE", "CASCADE")
+  
+  cookie, _ := r.Cookie("sid")
+  if len(cookie.String()) < 1 { // Set sid
+    sid := GenerateRandomString(40)
+    expiration := time.Now().Add(365 * 24 * time.Hour)
+    cookie := http.Cookie{Name: "sid", Value: sid, Expires: expiration}
+    http.SetCookie(w, &cookie)
+
+    // Save sid to DB
+    session := m.SessionCookieKey{
+      CookieName: sid,
+    }
+    s.DB.Create(&session)
+    s.Sid = sid
+    // @TODO: clean outdated cookie keys from DB  
+  } else {
+    s.Sid = cookie.Value
   }
-  con.Create(&session)
 }
 
-func Set()  {
-
+func (s *SessionManager) Set(key string, value string) {
+  var data m.SessionCookieKey
+  s.DB.Select("id").First(&data, "cookie_name = ?", s.Sid)
+  fmt.Println(data.ID)
 }
-
-// func (self *Manager) CreateSession(cookieName string, data string)  {
-//   connection.Create(&Session{CookieName: cookieName, Data: data})
-// }
