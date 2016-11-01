@@ -5,11 +5,12 @@ import (
   "net/http"
   "time"
   "math/rand"
+  "github.com/stanisdev/db"
 )
 
 type Containers struct {
   DB *gorm.DB
-  Session SessionManager
+  Session *SessionManager
 }
 
 type Cookie struct {
@@ -26,8 +27,10 @@ type Cookie struct {
     Unparsed   []string // Raw text of unparsed attribute-value pairs
 }
 
-func MakeHandler(fn func(http.ResponseWriter, *http.Request, *Containers), c *Containers) http.HandlerFunc {
+func MakeHandler(fn func(http.ResponseWriter, *http.Request, *Containers)) http.HandlerFunc {
   return func (w http.ResponseWriter, r *http.Request)  {
+    dbConnection := db.Connect()
+    c := &Containers{DB: dbConnection, Session: &SessionManager{DB: dbConnection}}
     c.Session.Start(w, r)
     fn(w, r, c)
   }

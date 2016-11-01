@@ -23,6 +23,7 @@ func loadTemplate(templateName string, w http.ResponseWriter, p *Page)  {
 
 func Index(w http.ResponseWriter, r *http.Request, c *Containers) {
   defer c.DB.Close()
+  c.Session.Set("", "")
   p := &Page{Title: "My Blog"}
   loadTemplate("index", w, p)
 }
