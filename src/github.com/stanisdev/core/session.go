@@ -15,9 +15,6 @@ type SessionManager struct {
 }
 
 func (s *SessionManager) Start(w http.ResponseWriter, r *http.Request) {
-  // s.DB.AutoMigrate(&m.SessionCookieKey{}, &m.SessionData{})
-  // s.DB.Model(&m.SessionData{}).AddForeignKey("session_cookie_key_id", "session_cookie_keys(id)", "CASCADE", "CASCADE")
-  
   cookie, _ := r.Cookie("sid")
   if len(cookie.String()) < 1 { // Set sid
     sid := GenerateRandomString(40)

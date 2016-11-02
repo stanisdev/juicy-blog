@@ -5,8 +5,12 @@ import (
   "net/http"
   "time"
   "math/rand"
+  "html/template"
+  "fmt"
   "github.com/stanisdev/db"
 )
+
+const viewPath = "src/github.com/stanisdev/templates/";
 
 type Containers struct {
   DB *gorm.DB
@@ -27,6 +31,10 @@ type Cookie struct {
     Unparsed   []string // Raw text of unparsed attribute-value pairs
 }
 
+type Page struct {
+    Title string
+}
+
 func MakeHandler(fn func(http.ResponseWriter, *http.Request, *Containers)) http.HandlerFunc {
   return func (w http.ResponseWriter, r *http.Request)  {
     dbConnection := db.Connect()
@@ -34,6 +42,15 @@ func MakeHandler(fn func(http.ResponseWriter, *http.Request, *Containers)) http.
     c.Session.Start(w, r)
     fn(w, r, c)
   }
+}
+
+func loadTemplate(templateName string, w http.ResponseWriter, p *Page)  {
+  w.Header().Set("Content-type", "text/html")
+  t, err := template.ParseFiles(viewPath + templateName + ".html")
+  if err != nil {
+    fmt.Fprintf(w, "Template cannot be loaded")
+  }
+  t.Execute(w, p)
 }
 
 func GenerateRandomString(l int) string {

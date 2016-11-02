@@ -7,8 +7,10 @@ import (
 )
 
 func main() {
+  core.DatabaseMigrate()
   http.HandleFunc("/", core.MakeHandler(core.Index))
-  http.HandleFunc("/article/add", core.MakeHandler(core.AddArticle))
+  http.HandleFunc("/login", core.MakeHandler(core.Login))
+  http.HandleFunc("/article/add", core.MakeHandler(core.AddArticle))  
 
   fmt.Println("Server is listening on port: 8080")
   http.ListenAndServe(":8080", nil)

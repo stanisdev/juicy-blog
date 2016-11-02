@@ -1,25 +1,9 @@
 package core
 
 import (
-  "fmt"
   "net/http"
-  "html/template"
+  "fmt"
 )
-
-const viewPath = "src/github.com/stanisdev/templates/";
-
-type Page struct {
-    Title string
-}
-
-func loadTemplate(templateName string, w http.ResponseWriter, p *Page)  {
-  w.Header().Set("Content-type", "text/html")
-  t, err := template.ParseFiles(viewPath + templateName + ".html")
-  if err != nil {
-    fmt.Fprintf(w, "Template cannot be loaded")
-  }
-  t.Execute(w, p)
-}
 
 func Index(w http.ResponseWriter, r *http.Request, c *Containers) {
   defer c.DB.Close()
@@ -27,6 +11,16 @@ func Index(w http.ResponseWriter, r *http.Request, c *Containers) {
   city, _ := c.Session.Get("city")
   p := &Page{Title: "My Blog " + city}
   loadTemplate("index", w, p)
+}
+
+func Login(w http.ResponseWriter, r *http.Request, c *Containers) {
+  if r.Method == "POST" {
+    r.ParseForm()
+    fmt.Println(r.Form)
+    fmt.Println(r.FormValue("email"))
+  }
+  p := &Page{Title: "Login"}
+  loadTemplate("login", w, p)
 }
 
 func AddArticle(w http.ResponseWriter, r *http.Request, c *Containers)  {
