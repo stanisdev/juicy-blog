@@ -23,8 +23,9 @@ func loadTemplate(templateName string, w http.ResponseWriter, p *Page)  {
 
 func Index(w http.ResponseWriter, r *http.Request, c *Containers) {
   defer c.DB.Close()
-  c.Session.Set("", "")
-  p := &Page{Title: "My Blog"}
+  // c.Session.Set("city", "Tokio")
+  city, _ := c.Session.Get("city")
+  p := &Page{Title: "My Blog " + city}
   loadTemplate("index", w, p)
 }
 

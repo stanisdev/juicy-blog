@@ -22,3 +22,11 @@ _testmain.go
 *.exe
 *.test
 *.prof
+
+/bin
+/tmp
+/src/github.com/howeyc/
+/src/github.com/jinzhu/
+/src/github.com/mattn/
+/src/github.com/pilu/
+/src/github.com/go-sql-driver/
