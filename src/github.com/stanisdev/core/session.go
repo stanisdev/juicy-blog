@@ -58,3 +58,7 @@ func (s *SessionManager) Get(key string) (string, bool) {
   s.DB.Select("id, value").Where("`key` = ? AND session_cookie_key_id = ?", key, s.PrimaryKey).First(&data)
   return data.Value, data.ID > 0
 }
+
+func (s *SessionManager) Unset(key string) {
+  s.DB.Unscoped().Delete(&m.SessionData{}, "`key` = ? AND session_cookie_key_id = ?", key, s.PrimaryKey)
+}

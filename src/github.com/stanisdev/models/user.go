@@ -1,6 +1,8 @@
 package models
 
 import (
+  "crypto/sha1"
+  "encoding/hex"
   "github.com/jinzhu/gorm"
 )
 
@@ -10,6 +12,8 @@ type User struct {
   Password string `gorm:"size:40"`
 }
 
-func (u *User) GetPassword() string {
-  return u.Password
+func (u *User) ComparePassword(password string) bool {
+  h := sha1.New()
+  h.Write([]byte(password))
+  return hex.EncodeToString(h.Sum(nil)) == u.Password
 }

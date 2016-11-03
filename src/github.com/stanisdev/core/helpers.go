@@ -7,7 +7,6 @@ import (
   "math/rand"
   "html/template"
   "fmt"
-  "github.com/stanisdev/db"
 )
 
 const viewPath = "src/github.com/stanisdev/templates/";
@@ -15,42 +14,51 @@ const viewPath = "src/github.com/stanisdev/templates/";
 type Containers struct {
   DB *gorm.DB
   Session *SessionManager
+  Page *Page
+}
+
+func (c *Containers) SetFlash(value string) {
+  c.Session.Set("flash", value)
+}
+
+func (c *Containers) GetFlash() (string, bool) {
+  value, exists := c.Session.Get("flash")
+  if exists == true {
+    c.Session.Unset("flash")
+    return value, true
+  } else {
+    return "", false
+  }
 }
 
 type Cookie struct {
-    Name       string
-    Value      string
-    Path       string
-    Domain     string
-    Expires    time.Time
-    RawExpires string
-    MaxAge     int
-    Secure     bool
-    HttpOnly   bool
-    Raw        string
-    Unparsed   []string // Raw text of unparsed attribute-value pairs
+  Name       string
+  Value      string
+  Path       string
+  Domain     string
+  Expires    time.Time
+  RawExpires string
+  MaxAge     int
+  Secure     bool
+  HttpOnly   bool
+  Raw        string
+  Unparsed   []string // Raw text of unparsed attribute-value pairs
 }
 
 type Page struct {
-    Title string
-}
-
-func MakeHandler(fn func(http.ResponseWriter, *http.Request, *Containers)) http.HandlerFunc {
-  return func (w http.ResponseWriter, r *http.Request)  {
-    dbConnection := db.Connect()
-    c := &Containers{DB: dbConnection, Session: &SessionManager{DB: dbConnection}}
-    c.Session.Start(w, r)
-    fn(w, r, c)
-  }
+  Title string
+  Flash string
+  Data map[string]interface{}
 }
 
 func loadTemplate(templateName string, w http.ResponseWriter, p *Page)  {
   w.Header().Set("Content-type", "text/html")
-  t, err := template.ParseFiles(viewPath + templateName + ".html")
+  t, err := template.ParseFiles(viewPath + "/layouts/layout.html", viewPath + templateName + ".html")
   if err != nil {
     fmt.Fprintf(w, "Template cannot be loaded")
   }
-  t.Execute(w, p)
+  //t.Execute(w, p)
+  t.ExecuteTemplate(w, "layout", p)
 }
 
 func GenerateRandomString(l int) string {

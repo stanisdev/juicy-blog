@@ -2,16 +2,14 @@ package main
 
 import (
   "github.com/stanisdev/core"
-  "net/http"
-  "fmt"
 )
 
 func main() {
   core.DatabaseMigrate()
-  http.HandleFunc("/", core.MakeHandler(core.Index))
-  http.HandleFunc("/login", core.MakeHandler(core.Login))
-  http.HandleFunc("/article/add", core.MakeHandler(core.AddArticle))  
 
-  fmt.Println("Server is listening on port: 8080")
-  http.ListenAndServe(":8080", nil)
+  router := core.Router{Handlers: make(map[string]map[string]core.RouterHandler)}
+  router.GET("/", core.Index)
+  router.GET("/login", core.Login)
+  router.POST("/login", core.LoginPost)
+  router.Start()
 }

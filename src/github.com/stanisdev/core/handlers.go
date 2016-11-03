@@ -3,6 +3,7 @@ package core
 import (
   "net/http"
   "fmt"
+  m "github.com/stanisdev/models"
 )
 
 func Index(w http.ResponseWriter, r *http.Request, c *Containers) {
@@ -14,13 +15,31 @@ func Index(w http.ResponseWriter, r *http.Request, c *Containers) {
 }
 
 func Login(w http.ResponseWriter, r *http.Request, c *Containers) {
-  if r.Method == "POST" {
-    r.ParseForm()
-    fmt.Println(r.Form)
-    fmt.Println(r.FormValue("email"))
+  c.Page.Title = "Login Super 22"
+  c.Page.Data["name"] = "John"
+  fmt.Println(c.GetFlash())
+}
+
+func LoginPost(w http.ResponseWriter, r *http.Request, c *Containers) {
+  r.ParseForm()
+  data := r.Form
+  if _, email := data["email"]; !email {
+    c.SetFlash("my_message 2")
+    fmt.Fprint(w, "Incorrect login/password")
+    return
   }
-  p := &Page{Title: "Login"}
-  loadTemplate("login", w, p)
+  if _, password := data["password"]; !password {
+    c.SetFlash("my_message 2")
+    fmt.Fprint(w, "Incorrect login/password")
+    return
+  }
+  var user m.User
+  c.DB.First(&user, "email = ?", data["email"])
+  if user.ID < 1 || !user.ComparePassword(r.FormValue("password")) {
+    c.SetFlash("my_message 2")
+    http.Redirect(w, r, "/login", 302)
+    return
+  }
 }
 
 func AddArticle(w http.ResponseWriter, r *http.Request, c *Containers)  {

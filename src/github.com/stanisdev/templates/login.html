@@ -1,8 +1,14 @@
-
+{{ define "content" }}
 <strong>{{.Title}}</strong>
+
+{{ .Data.name }}
 
 <form action="/login" method="post">
   <input type="text" name="email" /> <br>
-  <input type="text" name="passowrd" /> <br>
+  <input type="text" name="password" /> <br>
   <button type="submit">Inside</button>
 </form>
+{{ end }}
+{{ define "resources" }}
+  <script src="/js/script.js"></script>
+{{ end }}
