@@ -3,11 +3,41 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <title>{{.Title}}</title>
+    <link rel="stylesheet" type="text/css" href="/public/css/bootstrap.min.css" />
+    <link rel="stylesheet" type="text/css" href="/public/css/style.css" />
+    <script src="/public/js/script.js"></script>
     {{ template "resources" . }}
   </head>
   <body>
-    {{ if .Flash }} asasd {{ end }}
-    {{ template "content" . }}
+    <nav class="navbar navbar-default" style="border-radius: 0px;">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <a class="navbar-brand" href="/">Personal Blog</a>
+        </div>
+
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+          <ul class="nav navbar-nav">
+            <li {{if eq .Url "/" }}class="active"{{end}}><a href="/">Home</a></li>
+            <li><a href="#">Articles</a></li>
+          </ul>
+          <ul class="nav navbar-nav navbar-right">
+            <li {{if eq .Url "/login" }}class="active"{{end}}>
+              {{ if .User }}<a href="/logout">Logout</a>{{else}}<a href="/login">Login</a>{{end}}
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container">
+      {{ if .Flash }}
+      <div class="alert alert-dismissible alert-danger align-center" id="flash">
+        <button type="button" id="closeFlash" class="close" data-dismiss="alert">&times;</button>
+        <strong>{{ .Flash }}</strong>
+      </div>
+      {{ end }}
+      {{ template "content" . }}
+    </div>
   </body>
 </html>
 {{ end }}

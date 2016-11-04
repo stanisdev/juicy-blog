@@ -41,7 +41,7 @@ func (self *Router) handler(w http.ResponseWriter, r *http.Request) {
   if url == "/favicon.ico" {
     return
   }
-  hs, exists := self.Handlers[r.URL.Path]
+  hs, exists := self.Handlers[url]
   if !exists {
     self.notFound(w)
     return
@@ -58,12 +58,21 @@ func (self *Router) handler(w http.ResponseWriter, r *http.Request) {
   c.Session.Start(w, r)
   methodName := runtime.FuncForPC(reflect.ValueOf(h).Pointer()).Name()
   methodName = methodName[strings.LastIndex(methodName, ".")+1:]
+  c.Auth()
   h(w, r, c)
-  loadTemplate(strings.ToLower(methodName), w, c.Page)
+  if r.Method == "GET" {
+    message, hasFlash := c.GetFlash()
+    if (hasFlash == true) {
+      c.Page.Flash = message
+    }
+    c.Page.Url = url
+    loadTemplate(strings.ToLower(methodName), w, c.Page)
+  }
 }
 
 func (self *Router) Start() {
   http.HandleFunc("/", self.handler)
+  http.Handle("/public/", http.StripPrefix("/public/", http.FileServer(http.Dir("public"))))
   fmt.Println("Server is listening on port: 8080")
   http.ListenAndServe(":8080", nil)
 }

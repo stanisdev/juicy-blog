@@ -1,14 +1,28 @@
 {{ define "content" }}
-<strong>{{.Title}}</strong>
-
-{{ .Data.name }}
-
-<form action="/login" method="post">
-  <input type="text" name="email" /> <br>
-  <input type="text" name="password" /> <br>
-  <button type="submit">Inside</button>
+<div class="login align-center">
+  <form class="form-horizontal" method="post" action="/login">
+  <fieldset>
+    <div class="form-group">
+      <label for="inputEmail" class="col-lg-2 control-label">Email</label>
+      <div class="col-lg-10">
+        <input type="text" class="form-control" name="email" placeholder="Email">
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="inputPassword" class="col-lg-2 control-label">Password</label>
+      <div class="col-lg-10">
+        <input type="password" class="form-control" name="password" placeholder="Password">
+      </div>
+    </div>
+    <div class="form-group">
+      <div class="col-lg-10 col-lg-offset-2">
+        <button type="submit" class="btn btn-primary">Login</button>
+      </div>
+    </div>
+  </fieldset>
 </form>
+</div>
 {{ end }}
 {{ define "resources" }}
-  <script src="/js/script.js"></script>
+  <!-- Define script or styles here -->
 {{ end }}

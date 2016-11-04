@@ -2,44 +2,43 @@ package core
 
 import (
   "net/http"
-  "fmt"
+  "strconv"
   m "github.com/stanisdev/models"
 )
 
 func Index(w http.ResponseWriter, r *http.Request, c *Containers) {
-  defer c.DB.Close()
-  // c.Session.Set("city", "Tokio")
-  city, _ := c.Session.Get("city")
-  p := &Page{Title: "My Blog " + city}
-  loadTemplate("index", w, p)
+  c.Page.Title = "Personal Blog"
 }
 
 func Login(w http.ResponseWriter, r *http.Request, c *Containers) {
-  c.Page.Title = "Login Super 22"
+  c.Page.Title = "Login to Blog"
   c.Page.Data["name"] = "John"
-  fmt.Println(c.GetFlash())
+}
+
+func Logout(w http.ResponseWriter, r *http.Request, c *Containers) {
+  c.Session.Unset("user")
+  http.Redirect(w, r, "/login", 302)
 }
 
 func LoginPost(w http.ResponseWriter, r *http.Request, c *Containers) {
   r.ParseForm()
   data := r.Form
-  if _, email := data["email"]; !email {
-    c.SetFlash("my_message 2")
-    fmt.Fprint(w, "Incorrect login/password")
-    return
-  }
-  if _, password := data["password"]; !password {
-    c.SetFlash("my_message 2")
-    fmt.Fprint(w, "Incorrect login/password")
+  _, email := data["email"];
+  _, password := data["password"];
+  if !email || len(r.FormValue("email")) < 1 || !password || len(r.FormValue("password")) < 1 {
+    c.SetFlash("Email or Password was not specified")
+    http.Redirect(w, r, "/login", 302)
     return
   }
   var user m.User
   c.DB.First(&user, "email = ?", data["email"])
   if user.ID < 1 || !user.ComparePassword(r.FormValue("password")) {
-    c.SetFlash("my_message 2")
+    c.SetFlash("Incorrect Email or Password")
     http.Redirect(w, r, "/login", 302)
     return
   }
+  c.Session.Set("user", strconv.Itoa(int(user.ID)))
+  http.Redirect(w, r, "/", 302)
 }
 
 func AddArticle(w http.ResponseWriter, r *http.Request, c *Containers)  {

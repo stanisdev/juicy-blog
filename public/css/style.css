@@ -1,0 +1,14 @@
+div.login {
+  width: 500px;
+  height: auto;
+  margin-top: 50px;
+}
+
+.alert-danger {
+  width: 500;
+}
+
+.align-center {
+  margin-left: auto;
+  margin-right: auto;
+}
