@@ -8,6 +8,8 @@ import (
   "html/template"
   "fmt"
   m "github.com/stanisdev/models"
+  "encoding/json"
+  "io/ioutil"
 )
 
 const viewPath = "src/github.com/stanisdev/templates/";
@@ -63,6 +65,25 @@ type Page struct {
   Url string
   User *m.User
   Data map[string]interface{}
+}
+
+type Config struct {
+  DbName string `json:"db_name"`
+  DbUser string `json:"db_user"`
+  DbPass string `json:"db_pass"`
+  UrlsWithoutTemplate []string `json:"urls_without_template"`
+}
+
+func GetConfig() *Config {
+  raw, err := ioutil.ReadFile("./config.json")
+  if err != nil {
+    panic("Config file cannot be loaded")
+  }
+  var config Config
+  if err := json.Unmarshal(raw, &config); err != nil {
+    panic("JSON config cannot be parsed")
+  }
+  return &config
 }
 
 func loadTemplate(templateName string, w http.ResponseWriter, p *Page)  {

@@ -13,6 +13,7 @@ type RouterHandler func(http.ResponseWriter, *http.Request, *Containers)
 
 type Router struct {
   Handlers map[string]map[string]RouterHandler
+  Config *Config
 }
 
 func (self *Router) defineHandler(url string) {
@@ -52,7 +53,7 @@ func (self *Router) handler(w http.ResponseWriter, r *http.Request) {
     return
   }
   // Handler has found in map
-  dbConnection := db.Connect()
+  dbConnection := db.Connect(self.Config.DbUser, self.Config.DbPass, self.Config.DbName)
   c := &Containers{DB: dbConnection, Session: &SessionManager{DB: dbConnection}, Page: &Page{}}
   c.Page.Data = make(map[string]interface{})
   c.Session.Start(w, r)
@@ -61,6 +62,11 @@ func (self *Router) handler(w http.ResponseWriter, r *http.Request) {
   c.Auth()
   h(w, r, c)
   if r.Method == "GET" {
+    for _, value := range self.Config.UrlsWithoutTemplate {
+      if value == url {
+        return
+      }
+    }
     message, hasFlash := c.GetFlash()
     if (hasFlash == true) {
       c.Page.Flash = message

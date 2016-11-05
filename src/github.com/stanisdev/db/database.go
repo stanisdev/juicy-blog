@@ -5,8 +5,8 @@ import (
   _ "github.com/jinzhu/gorm/dialects/mysql"
 )
 
-func Connect() *gorm.DB  {
-  con, err := gorm.Open("mysql", "root:root@/gorm?charset=utf8&parseTime=True&loc=Local")
+func Connect(user string, password string, dbName string) *gorm.DB  {
+  con, err := gorm.Open("mysql", user + ":" + password + "@/" + dbName + "?charset=utf8&parseTime=True&loc=Local")
   if err != nil {
     panic("failed to connect database")
   }

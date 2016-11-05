@@ -1,0 +1,6 @@
+{
+  "db_name": "gorm",
+  "db_user": "root",
+  "db_pass": "root", 
+  "urls_without_template": ["/logout"]
+}
