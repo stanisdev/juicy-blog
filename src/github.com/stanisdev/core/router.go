@@ -60,6 +60,13 @@ func (self *Router) handler(w http.ResponseWriter, r *http.Request) {
   methodName := runtime.FuncForPC(reflect.ValueOf(h).Pointer()).Name()
   methodName = methodName[strings.LastIndex(methodName, ".")+1:]
   c.Auth()
+  // Check restricted urls
+  for _, value := range self.Config.ProtectedUrls {
+    if value.Url == url && value.Method == r.Method && c.Page.User == nil {
+      self.notFound(w)
+      return
+    }
+  }
   h(w, r, c)
   if r.Method == "GET" {
     for _, value := range self.Config.UrlsWithoutTemplate {

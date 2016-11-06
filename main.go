@@ -13,5 +13,8 @@ func main() {
   router.GET("/login", core.Login)
   router.POST("/login", core.LoginPost)
   router.GET("/logout", core.Logout)
+  router.GET("/articles", core.Articles)
+  router.GET("/articles/new", core.NewArticle)
+  router.POST("/articles/new", core.NewArticlePost)
   router.Start()
 }

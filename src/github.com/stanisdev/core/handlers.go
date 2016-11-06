@@ -7,7 +7,7 @@ import (
 )
 
 func Index(w http.ResponseWriter, r *http.Request, c *Containers) {
-  c.Page.Title = "Personal Blog"
+  c.Page.Title = "Mutual Blog"
 }
 
 func Login(w http.ResponseWriter, r *http.Request, c *Containers) {
@@ -41,7 +41,14 @@ func LoginPost(w http.ResponseWriter, r *http.Request, c *Containers) {
   http.Redirect(w, r, "/", 302)
 }
 
-func AddArticle(w http.ResponseWriter, r *http.Request, c *Containers)  {
-  //p := &Page{Title: "New Article"}
-  ///loadTemplate("new-article", w, p)
+func Articles(w http.ResponseWriter, r *http.Request, c *Containers)  {
+  c.Page.Title = "Articles"
+}
+
+func NewArticle(w http.ResponseWriter, r *http.Request, c *Containers)  {
+  c.Page.Title = "New Article"
+}
+
+func NewArticlePost(w http.ResponseWriter, r *http.Request, c *Containers)  {
+  
 }

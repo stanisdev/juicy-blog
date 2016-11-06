@@ -72,6 +72,10 @@ type Config struct {
   DbUser string `json:"db_user"`
   DbPass string `json:"db_pass"`
   UrlsWithoutTemplate []string `json:"urls_without_template"`
+  ProtectedUrls []struct{
+    Url string 
+    Method string
+  } `json:"protected_urls"`
 }
 
 func GetConfig() *Config {
