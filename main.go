@@ -2,12 +2,13 @@ package main
 
 import (
   "github.com/stanisdev/core"
+  "github.com/stanisdev/db"
 ) 
 
 func main() {
   router := core.Router{Handlers: make(map[string]map[string]core.RouterHandler)}
   router.Config = core.GetConfig()
-  core.DatabaseMigrate(router.Config)
+  db.DatabaseMigrate(router.Config.DbUser, router.Config.DbPass, router.Config.DbName)
   
   router.GET("/", core.Index)
   router.GET("/login", core.Login)
