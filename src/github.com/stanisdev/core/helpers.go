@@ -16,17 +16,17 @@ import (
   "strings"
 )
 
-func ValidateModel(validatorStruct interface{}, formData url.Values, modelInstance interface{}) (bool, string) {
+func ValidateModel(modelInstance interface{}, formData url.Values) (bool, string) {
   decoder := schema.NewDecoder()
-  decoder.Decode(validatorStruct, formData)
-  _, err := validator.ValidateStruct(validatorStruct)
-  if err != nil {
+  if err := decoder.Decode(modelInstance, formData); err != nil {
+    return true, "Fields cannot be parsed"
+  }
+  if _, err := validator.ValidateStruct(modelInstance); err != nil {
     var message string = err.Error()
     var splited []string = strings.Split(message[:len(message)-1], ";")
-    return false, strings.Join(splited, "<br/>")
+    return true, strings.Join(splited, "<br/>")
   } else {
-    decoder.Decode(modelInstance, formData)
-    return true, ""
+    return false, ""
   }
 }
 
