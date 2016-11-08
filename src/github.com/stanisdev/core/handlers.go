@@ -50,5 +50,13 @@ func NewArticle(w http.ResponseWriter, r *http.Request, c *Containers)  {
 }
 
 func NewArticlePost(w http.ResponseWriter, r *http.Request, c *Containers)  {
-  
+  r.ParseForm()
+  var article m.Article
+  if noError, message := ValidateModel(new(m.ArticleValidator), r.PostForm, &article); noError == false {
+    c.SetFlash(message)
+  } else {
+    article.UserID = c.Page.User.ID
+    c.DB.Create(&article)
+  }
+  http.Redirect(w, r, "/articles/new", 302)
 }

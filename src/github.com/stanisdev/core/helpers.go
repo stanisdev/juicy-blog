@@ -10,7 +10,25 @@ import (
   m "github.com/stanisdev/models"
   "encoding/json"
   "io/ioutil"
+  "net/url"
+  "github.com/gorilla/schema"
+  validator "github.com/asaskevich/govalidator"
+  "strings"
 )
+
+func ValidateModel(validatorStruct interface{}, formData url.Values, modelInstance interface{}) (bool, string) {
+  decoder := schema.NewDecoder()
+  decoder.Decode(validatorStruct, formData)
+  _, err := validator.ValidateStruct(validatorStruct)
+  if err != nil {
+    var message string = err.Error()
+    var splited []string = strings.Split(message[:len(message)-1], ";")
+    return false, strings.Join(splited, "<br/>")
+  } else {
+    decoder.Decode(modelInstance, formData)
+    return true, ""
+  }
+}
 
 const viewPath = "src/github.com/stanisdev/templates/";
 

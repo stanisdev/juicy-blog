@@ -10,3 +10,9 @@ type Article struct {
   Content string `gorm:"size:3000;not null"`
   UserID uint `gorm:"not null"`
 }
+
+type ArticleValidator struct {
+  Title string `valid:"required,length(5|255)"`
+  Content string `valid:"required,length(1|3000)"`
+  UserID uint
+}
