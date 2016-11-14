@@ -5,7 +5,6 @@ import (
   "github.com/jinzhu/gorm"
   "net/http"
   "time"
-  _ "fmt"
 )
 
 type SessionManager struct {
@@ -17,28 +16,33 @@ type SessionManager struct {
 func (s *SessionManager) Start(w http.ResponseWriter, r *http.Request) {
   cookie, _ := r.Cookie("sid")
   if len(cookie.String()) < 1 { // Set sid
-    sid := GenerateRandomString(40)
-    expiration := time.Now().Add(365 * 24 * time.Hour)
-    cookie := http.Cookie{Name: "sid", Value: sid, Expires: expiration}
-    http.SetCookie(w, &cookie)
-
-    // Save sid to DB
-    session := m.SessionCookieKey{
-      CookieName: sid,
-    }
-    s.DB.Create(&session)
-    s.Sid = sid
-    s.PrimaryKey = session.ID
+    s.create(w)
     // @TODO: clean outdated cookie keys from DB  
   } else {
-    s.Sid = cookie.Value
     var sesKey m.SessionCookieKey
+    s.Sid = cookie.Value
     s.DB.Select("id").First(&sesKey, "cookie_name = ?", s.Sid)
     if sesKey.ID < 1 {
-      panic("Session data cannot be loaded")
+      s.create(w)
+    } else {
+      s.PrimaryKey = sesKey.ID
     }
-    s.PrimaryKey = sesKey.ID
   }
+}
+
+func (s *SessionManager) create(w http.ResponseWriter) {
+  sid := GenerateRandomString(40)
+  expiration := time.Now().Add(365 * 24 * time.Hour)
+  cookie := http.Cookie{Name: "sid", Value: sid, Expires: expiration}
+  http.SetCookie(w, &cookie)
+
+  // Save sid to DB
+  session := m.SessionCookieKey{
+    CookieName: sid,
+  }
+  s.DB.Create(&session)
+  s.Sid = sid
+  s.PrimaryKey = session.ID
 }
 
 func (s *SessionManager) Set(key string, value string) {

@@ -30,3 +30,5 @@ _testmain.go
 /src/github.com/mattn/
 /src/github.com/pilu/
 /src/github.com/go-sql-driver/
+/src/github.com/asaskevich/
+/src/github.com/gorilla/

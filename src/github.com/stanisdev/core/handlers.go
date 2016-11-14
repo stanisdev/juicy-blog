@@ -11,16 +11,19 @@ func Index(w http.ResponseWriter, r *http.Request, c *Containers) {
 }
 
 func Login(w http.ResponseWriter, r *http.Request, c *Containers) {
+  if c.Page.User.Authorized() {
+    http.Redirect(w, r, "/", 302)
+    return
+  }
   c.Page.Title = "Login to Blog"
   c.Page.Data["name"] = "John"
 }
 
-func Logout(w http.ResponseWriter, r *http.Request, c *Containers) {
-  c.Session.Unset("user")
-  http.Redirect(w, r, "/login", 302)
-}
-
 func LoginPost(w http.ResponseWriter, r *http.Request, c *Containers) {
+  if c.Page.User.Authorized() {
+    http.Redirect(w, r, "/", 302)
+    return
+  }
   r.ParseForm()
   data := r.Form
   _, email := data["email"];
@@ -41,7 +44,18 @@ func LoginPost(w http.ResponseWriter, r *http.Request, c *Containers) {
   http.Redirect(w, r, "/", 302)
 }
 
+func Logout(w http.ResponseWriter, r *http.Request, c *Containers) {
+  c.Session.Unset("user")
+  http.Redirect(w, r, "/login", 302)
+}
+
 func Articles(w http.ResponseWriter, r *http.Request, c *Containers)  {
+  var articles []struct{Id int; Title string; Content string; Userid int; Username string}
+  c.DB.Table("articles a").
+    Select("a.id, a.title, a.content, u.name username, u.id userid").
+    Joins("LEFT JOIN users u on a.user_id = u.id").
+    Scan(&articles)
+  c.Page.Data["articles"] = &articles
   c.Page.Title = "Articles"
 }
 

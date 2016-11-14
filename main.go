@@ -1,3 +1,9 @@
+/*
+ * Mutual Blog
+ * Copyright(c) 2016 Stanislav Zavalishin <javascript.nodejs.developer@gmail.com>
+ * MIT Licensed
+ */
+ 
 package main
 
 import (

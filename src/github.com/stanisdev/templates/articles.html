@@ -1,5 +1,15 @@
 {{ define "content" }}
-  Articles Page
+  
+  {{ range $article := .Data.articles }}
+    <a href="/articles/{{ $article.Id }}">{{ $article.Title }}</a>
+    <br/>
+    {{ $article.Content }}
+    <br/>
+    <br/>
+    Author: <a href="/users/{{ $article.Userid }}">{{ $article.Username }}</a>
+    <hr/>
+  {{ end }}
+  
 {{ end }}
 {{ define "resources" }}
 {{ end }}

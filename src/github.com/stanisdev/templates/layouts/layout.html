@@ -19,11 +19,11 @@
           <ul class="nav navbar-nav">
             <li {{if eq .Url "/" }}class="active"{{end}}><a href="/">Home</a></li>
             <li {{if eq .Url "/articles" }}class="active"{{end}}><a href="/articles">Articles</a></li>
-            {{ if .User }}<li {{if eq .Url "/articles/new" }}class="active"{{end}}><a href="/articles/new">New</a></li>{{end}}
+            {{ if gt .User.ID 0 }}<li {{if eq .Url "/articles/new" }}class="active"{{end}}><a href="/articles/new">New</a></li>{{end}}
           </ul>
           <ul class="nav navbar-nav navbar-right">
             <li {{if eq .Url "/login" }}class="active"{{end}}>
-              {{ if .User }}<a href="/logout">Logout</a>{{else}}<a href="/login">Login</a>{{end}}
+              {{ if gt .User.ID 0 }}<a href="/logout">Logout</a>{{else}}<a href="/login">Login</a>{{end}}
             </li>
           </ul>
         </div>

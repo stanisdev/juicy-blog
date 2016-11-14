@@ -7,6 +7,7 @@ import (
   "runtime"
   "reflect"
   "strings"
+  "html/template"
 )
 
 type RouterHandler func(http.ResponseWriter, *http.Request, *Containers)
@@ -62,7 +63,7 @@ func (self *Router) handler(w http.ResponseWriter, r *http.Request) {
   c.Auth()
   // Check restricted urls
   for _, value := range self.Config.ProtectedUrls {
-    if value.Url == url && value.Method == r.Method && c.Page.User == nil {
+    if value.Url == url && value.Method == r.Method && !c.Page.User.Authorized() {
       self.notFound(w)
       return
     }
@@ -76,7 +77,7 @@ func (self *Router) handler(w http.ResponseWriter, r *http.Request) {
     }
     message, hasFlash := c.GetFlash()
     if (hasFlash == true) {
-      c.Page.Flash = message
+      c.Page.Flash = template.HTML(message)
     }
     c.Page.Url = url
     loadTemplate(strings.ToLower(methodName), w, c.Page)

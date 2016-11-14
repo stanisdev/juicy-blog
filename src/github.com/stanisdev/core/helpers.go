@@ -55,11 +55,7 @@ func (c *Containers) GetFlash() (string, bool) {
 func (c *Containers) Auth() {
   userId, isAuth := c.Session.Get("user") 
   if isAuth == true {
-    var user m.User
-    c.DB.Select("id, name, email").First(&user, userId)
-    if user.ID > 0 {
-      c.Page.User = &user
-    }
+    c.DB.Select("id, name, email").First(&c.Page.User, userId)
   }
 }
 
@@ -79,9 +75,9 @@ type Cookie struct {
 
 type Page struct {
   Title string
-  Flash string
+  Flash template.HTML
   Url string
-  User *m.User
+  User m.User
   Data map[string]interface{}
 }
 
