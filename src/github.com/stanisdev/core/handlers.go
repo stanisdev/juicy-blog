@@ -4,6 +4,7 @@ import (
   "net/http"
   "strconv"
   m "github.com/stanisdev/models"
+  "fmt"
 )
 
 func Index(w http.ResponseWriter, r *http.Request, c *Containers) {
@@ -50,12 +51,8 @@ func Logout(w http.ResponseWriter, r *http.Request, c *Containers) {
 }
 
 func Articles(w http.ResponseWriter, r *http.Request, c *Containers)  {
-  var articles []struct{Id int; Title string; Content string; Userid int; Username string}
-  c.DB.Table("articles a").
-    Select("a.id, a.title, a.content, u.name username, u.id userid").
-    Joins("LEFT JOIN users u on a.user_id = u.id").
-    Scan(&articles)
-  c.Page.Data["articles"] = &articles
+  fmt.Println(c.Params["page"])
+  c.Page.Data["articles"] = c.Models.GetArticles(0, 0)
   c.Page.Title = "Articles"
 }
 

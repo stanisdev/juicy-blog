@@ -1,13 +1,11 @@
 package core
 
 import (
-  "github.com/jinzhu/gorm"
   "net/http"
   "time"
   "math/rand"
   "html/template"
   "fmt"
-  m "github.com/stanisdev/models"
   "encoding/json"
   "io/ioutil"
   "net/url"
@@ -16,28 +14,11 @@ import (
   "strings"
 )
 
-func ValidateModel(modelInstance interface{}, formData url.Values) (bool, string) {
-  decoder := schema.NewDecoder()
-  if err := decoder.Decode(modelInstance, formData); err != nil {
-    return true, "Fields cannot be parsed"
-  }
-  if _, err := validator.ValidateStruct(modelInstance); err != nil {
-    var message string = err.Error()
-    var splited []string = strings.Split(message[:len(message)-1], ";")
-    return true, strings.Join(splited, "<br/>")
-  } else {
-    return false, ""
-  }
-}
+const viewPath = "src/github.com/stanisdev/templates/"
 
-const viewPath = "src/github.com/stanisdev/templates/";
-
-type Containers struct {
-  DB *gorm.DB
-  Session *SessionManager
-  Page *Page
-}
-
+/**
+ * Container's methods
+ */
 func (c *Containers) SetFlash(value string) {
   c.Session.Set("flash", value)
 }
@@ -59,39 +40,9 @@ func (c *Containers) Auth() {
   }
 }
 
-type Cookie struct {
-  Name       string
-  Value      string
-  Path       string
-  Domain     string
-  Expires    time.Time
-  RawExpires string
-  MaxAge     int
-  Secure     bool
-  HttpOnly   bool
-  Raw        string
-  Unparsed   []string // Raw text of unparsed attribute-value pairs
-}
-
-type Page struct {
-  Title string
-  Flash template.HTML
-  Url string
-  User m.User
-  Data map[string]interface{}
-}
-
-type Config struct {
-  DbName string `json:"db_name"`
-  DbUser string `json:"db_user"`
-  DbPass string `json:"db_pass"`
-  UrlsWithoutTemplate []string `json:"urls_without_template"`
-  ProtectedUrls []struct{
-    Url string 
-    Method string
-  } `json:"protected_urls"`
-}
-
+/**
+ * General Functions
+ */
 func GetConfig() *Config {
   raw, err := ioutil.ReadFile("./config.json")
   if err != nil {
@@ -110,7 +61,6 @@ func loadTemplate(templateName string, w http.ResponseWriter, p *Page)  {
   if err != nil {
     fmt.Fprintf(w, "Template cannot be loaded")
   }
-  //t.Execute(w, p)
   t.ExecuteTemplate(w, "layout", p)
 }
 
@@ -125,4 +75,18 @@ func GenerateRandomString(l int) string {
 
 func randInt(min int, max int) int {
   return min + rand.Intn(max-min)
+}
+
+func ValidateModel(modelInstance interface{}, formData url.Values) (bool, string) {
+  decoder := schema.NewDecoder()
+  if err := decoder.Decode(modelInstance, formData); err != nil {
+    return true, "Fields cannot be parsed"
+  }
+  if _, err := validator.ValidateStruct(modelInstance); err != nil {
+    var message string = err.Error()
+    var splited []string = strings.Split(message[:len(message)-1], ";")
+    return true, strings.Join(splited, "<br/>")
+  } else {
+    return false, ""
+  }
 }

@@ -4,18 +4,15 @@ import (
   "net/http"
   "fmt"
   "github.com/stanisdev/db"
+  "github.com/stanisdev/models"
   "runtime"
   "reflect"
   "strings"
+  "regexp"
   "html/template"
 )
 
 type RouterHandler func(http.ResponseWriter, *http.Request, *Containers)
-
-type Router struct {
-  Handlers map[string]map[string]RouterHandler
-  Config *Config
-}
 
 func (self *Router) defineHandler(url string) {
   if len(self.Handlers[url]) < 1 {
@@ -43,10 +40,30 @@ func (self *Router) handler(w http.ResponseWriter, r *http.Request) {
   if url == "/favicon.ico" {
     return
   }
+  reqData := make(map[string]string)
   hs, exists := self.Handlers[url]
-  if !exists {
-    self.notFound(w)
-    return
+  if !exists { // First compare by simple equal
+    var matches []string
+    reg, _ := regexp.Compile(":([a-z]+)") 
+    for pattern, _ := range self.Handlers { // Compare to patterns
+      if strings.Contains(pattern, ":") {
+        changedPattern := reg.ReplaceAllString(pattern, "([^\\/]+)")
+        re, _ := regexp.Compile("^" + changedPattern + "$") 
+        matches = re.FindStringSubmatch(url)
+        if len(matches) > 0 { // Pattern has found
+          hs, _ = self.Handlers[pattern]
+          params := reg.FindAllString(pattern, len(matches)-1)
+          for key, val := range params {
+            reqData[val[1:]] = matches[key+1]
+          }
+          break
+        }
+      }
+    }
+    if len(matches) < 1 {
+      self.notFound(w)
+      return
+    }
   }
   h, exists := hs[r.Method]
   if !exists {
@@ -55,7 +72,14 @@ func (self *Router) handler(w http.ResponseWriter, r *http.Request) {
   }
   // Handler has found in map
   dbConnection := db.Connect(self.Config.DbUser, self.Config.DbPass, self.Config.DbName)
-  c := &Containers{DB: dbConnection, Session: &SessionManager{DB: dbConnection}, Page: &Page{}}
+
+  c := &Containers{
+    DB: dbConnection, 
+    Models: models.StaticMethods{DB: dbConnection}, 
+    Session: SessionManager{DB: dbConnection}, 
+    Page: Page{},
+    Params: reqData,
+  }
   c.Page.Data = make(map[string]interface{})
   c.Session.Start(w, r)
   methodName := runtime.FuncForPC(reflect.ValueOf(h).Pointer()).Name()
@@ -80,7 +104,7 @@ func (self *Router) handler(w http.ResponseWriter, r *http.Request) {
       c.Page.Flash = template.HTML(message)
     }
     c.Page.Url = url
-    loadTemplate(strings.ToLower(methodName), w, c.Page)
+    loadTemplate(strings.ToLower(methodName), w, &c.Page)
   }
 }
 
