@@ -1,0 +1,13 @@
+{{ define "content" }}
+  
+  {{ if .Data.notFound }} 
+  111111
+  {{else}} 
+  
+    <h2>{{.Data.article.Title}}</h2>
+    <div>{{.Data.article.Content}}</div>
+  {{end}}
+
+{{ end }}
+{{ define "resources" }}
+{{ end }}

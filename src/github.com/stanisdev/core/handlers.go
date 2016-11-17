@@ -3,7 +3,8 @@ package core
 import (
   "net/http"
   "strconv"
-  m "github.com/stanisdev/models"
+  "github.com/stanisdev/models"
+  "fmt"
 )
 
 /**
@@ -42,7 +43,7 @@ func LoginPost(w http.ResponseWriter, r *http.Request, c *Containers) {
     http.Redirect(w, r, "/login", 302)
     return
   }
-  var user m.User
+  var user models.User
   c.DB.First(&user, "email = ?", data["email"])
   if user.ID < 1 || !user.ComparePassword(r.FormValue("password")) {
     c.SetFlash("Incorrect Email or Password")
@@ -70,28 +71,48 @@ func Articles(w http.ResponseWriter, r *http.Request, c *Containers)  {
   if len(page) > 0 { // Page param exists
     p, err := strconv.Atoi(page)
     if err != nil {
-      http.Redirect(w, r, "/articles", 302)
+      c.BadRequest = "Page parameter must be a number"
       return
     }
-    offset = p
+    if p > 1 {
+      offset = (p - 1) * 5
+    }
   }
-  c.Page.Data["articles"] = c.Models.GetArticles(0, offset)
+  // Send 2 queries in parallel
+  ch := make(chan bool, 2)
+  go func() {
+    c.Page.Data["articles"] = c.Models.GetArticles(0, offset)
+    ch <- true
+  }()
+  var count int
+  go func() {
+    c.DB.Model(&models.Article{}).Count(&count)
+    ch <- true
+  }()
+  for i := 0; i < 2; i++ {
+    <-ch
+  }
+  close(ch)
+  if count <= offset {
+    c.BadRequest = "Page does not exist"
+  }
+  c.Page.Data["count"] = count
   c.Page.Title = "Articles"
 }
 
 /**
  * Create new Article
  */
-func NewArticle(w http.ResponseWriter, r *http.Request, c *Containers)  {
+func ArticleNew(w http.ResponseWriter, r *http.Request, c *Containers)  {
   c.Page.Title = "New Article"
 }
 
 /**
  * Create new Article (POST)
  */
-func NewArticlePost(w http.ResponseWriter, r *http.Request, c *Containers)  {
+func ArticleNewPost(w http.ResponseWriter, r *http.Request, c *Containers)  {
   r.ParseForm()
-  var article m.Article
+  var article models.Article
   if hasError, message := ValidateModel(&article, r.PostForm); hasError == true {
     c.SetFlash(message)
   } else {
@@ -101,5 +122,24 @@ func NewArticlePost(w http.ResponseWriter, r *http.Request, c *Containers)  {
       c.SetFlash("Article cannot be created")
     }
   }
+  fmt.Println("Posted")
   http.Redirect(w, r, "/articles/new", 302)
+}
+
+/**
+ * Create new Article (POST)
+ */
+func ArticleView(w http.ResponseWriter, r *http.Request, c *Containers)  {
+  // @TODO check to number (create separate function, that check whether number)
+  id, _ := strconv.Atoi(c.Params["id"])
+  var article models.Article
+  c.DB.Find(&article, id)
+  title := "Article"
+  if article.ID < 1 {
+    c.Page.Data["notFound"] = true
+  } else {
+    title += " :: " + article.Title
+    c.Page.Data["article"] = article
+  }
+  c.Page.Title = title
 }

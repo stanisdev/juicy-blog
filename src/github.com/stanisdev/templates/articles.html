@@ -1,7 +1,7 @@
 {{ define "content" }}
   
   {{ range $article := .Data.articles }}
-    <a href="/articles/{{ $article.Id }}">{{ $article.Title }}</a>
+    <a href="/article/{{ $article.Id }}">{{ $article.Title }}</a>
     <br/>
     {{ $article.Content }}
     <br/>
@@ -9,7 +9,22 @@
     Author: <a href="/users/{{ $article.Userid }}">{{ $article.Username }}</a>
     <hr/>
   {{ end }}
-  
+
+  <!-- Pagination -->
+  {{ if gt .Data.count 5 }}
+    <div class="pg">
+      <ul class="pagination">
+        <li class="disabled"><a href="#">&laquo;</a></li>
+        <li class="active"><a href="#">1</a></li>
+        <li><a href="#">2</a></li>
+        <li><a href="#">3</a></li>
+        <li><a href="#">4</a></li>
+        <li><a href="#">5</a></li>
+        <li><a href="#">&raquo;</a></li>
+      </ul>
+    </div>
+  {{end}}
+
 {{ end }}
 {{ define "resources" }}
 {{ end }}

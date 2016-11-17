@@ -13,6 +13,7 @@ type Containers struct {
   Session SessionManager
   Page Page
   Params map[string]string
+  BadRequest string
 }
 
 type Router struct {

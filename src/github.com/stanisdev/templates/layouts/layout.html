@@ -18,7 +18,7 @@
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
           <ul class="nav navbar-nav">
             <li {{if eq .Url "/" }}class="active"{{end}}><a href="/">Home</a></li>
-            <li {{if eq .Url "/articles" }}class="active"{{end}}><a href="/articles">Articles</a></li>
+            <li {{ if and (IsArticles .Url) (ne .Url "/articles/new") }}class="active"{{end}}><a href="/articles">Articles</a></li>
             {{ if gt .User.ID 0 }}<li {{if eq .Url "/articles/new" }}class="active"{{end}}><a href="/articles/new">New</a></li>{{end}}
           </ul>
           <ul class="nav navbar-nav navbar-right">

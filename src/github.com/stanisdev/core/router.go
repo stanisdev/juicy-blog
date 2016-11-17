@@ -97,6 +97,11 @@ func (self *Router) handler(w http.ResponseWriter, r *http.Request) {
     }
   }
   h(w, r, c)
+  if len(c.BadRequest) > 0 { // Some intolerable errors
+    w.WriteHeader(http.StatusBadRequest)
+    fmt.Fprint(w, c.BadRequest)
+    return
+  }
   if r.Method == "GET" {
     for _, value := range self.Config.UrlsWithoutTemplate {
       if value == url {

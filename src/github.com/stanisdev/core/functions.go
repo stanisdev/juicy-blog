@@ -57,7 +57,12 @@ func GetConfig() *Config {
 
 func loadTemplate(templateName string, w http.ResponseWriter, p *Page)  {
   w.Header().Set("Content-type", "text/html")
-  t, err := template.ParseFiles(viewPath + "/layouts/layout.html", viewPath + templateName + ".html")
+  tplFuncMap := make(template.FuncMap)
+  tplFuncMap["IsArticles"] = func (url string) bool {
+    return len(url) > 8 && url[:9] == "/articles"
+  }
+  t, err := template.New("").Funcs(tplFuncMap).ParseFiles(viewPath + "/layouts/layout.html", viewPath + templateName + ".html")
+
   if err != nil {
     fmt.Fprintf(w, "Template cannot be loaded")
   }
@@ -89,4 +94,9 @@ func ValidateModel(modelInstance interface{}, formData url.Values) (bool, string
   } else {
     return false, ""
   }
+}
+
+func MakePagination(currentPage int, pageCount int) {
+  var marks []struct{Title string; Clickable bool; Number interface{}}
+  fmt.Println(marks)
 }

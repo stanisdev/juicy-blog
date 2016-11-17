@@ -21,7 +21,8 @@ func main() {
   router.POST("/login", core.LoginPost)
   router.GET("/logout", core.Logout)
   router.GET("/articles/:page?", core.Articles)
-  router.GET("/articles/new", core.NewArticle)
-  router.POST("/articles/new", core.NewArticlePost)
+  router.GET("/articles/new", core.ArticleNew)
+  router.POST("/articles/new", core.ArticleNewPost)
+  router.GET("/article/:id", core.ArticleView)
   router.Start()
 }
