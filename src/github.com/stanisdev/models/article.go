@@ -16,6 +16,8 @@ func (sm *StaticMethods) GetArticles(limit int, offset int) interface{} {
   sm.DB.Table("articles a").
     Select("a.id, a.title, a.content, u.name username, u.id userid").
     Joins("LEFT JOIN users u on a.user_id = u.id").
+    Limit(5).
+    Offset(2).
     Scan(&articles)
   return &articles
 }

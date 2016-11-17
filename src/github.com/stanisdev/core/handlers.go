@@ -4,13 +4,18 @@ import (
   "net/http"
   "strconv"
   m "github.com/stanisdev/models"
-  "fmt"
 )
 
+/**
+ * Index page
+ */
 func Index(w http.ResponseWriter, r *http.Request, c *Containers) {
   c.Page.Title = "Mutual Blog"
 }
 
+/**
+ * Login page
+ */
 func Login(w http.ResponseWriter, r *http.Request, c *Containers) {
   if c.Page.User.Authorized() {
     http.Redirect(w, r, "/", 302)
@@ -20,6 +25,9 @@ func Login(w http.ResponseWriter, r *http.Request, c *Containers) {
   c.Page.Data["name"] = "John"
 }
 
+/**
+ * Login (POST)
+ */
 func LoginPost(w http.ResponseWriter, r *http.Request, c *Containers) {
   if c.Page.User.Authorized() {
     http.Redirect(w, r, "/", 302)
@@ -45,21 +53,42 @@ func LoginPost(w http.ResponseWriter, r *http.Request, c *Containers) {
   http.Redirect(w, r, "/", 302)
 }
 
+/**
+ * Logout page
+ */
 func Logout(w http.ResponseWriter, r *http.Request, c *Containers) {
   c.Session.Unset("user")
   http.Redirect(w, r, "/login", 302)
 }
 
+/**
+ * Articles list
+ */
 func Articles(w http.ResponseWriter, r *http.Request, c *Containers)  {
-  fmt.Println(c.Params["page"])
-  c.Page.Data["articles"] = c.Models.GetArticles(0, 0)
+  var offset int = 0
+  var page string = c.Params["page"]
+  if len(page) > 0 { // Page param exists
+    p, err := strconv.Atoi(page)
+    if err != nil {
+      http.Redirect(w, r, "/articles", 302)
+      return
+    }
+    offset = p
+  }
+  c.Page.Data["articles"] = c.Models.GetArticles(0, offset)
   c.Page.Title = "Articles"
 }
 
+/**
+ * Create new Article
+ */
 func NewArticle(w http.ResponseWriter, r *http.Request, c *Containers)  {
   c.Page.Title = "New Article"
 }
 
+/**
+ * Create new Article (POST)
+ */
 func NewArticlePost(w http.ResponseWriter, r *http.Request, c *Containers)  {
   r.ParseForm()
   var article m.Article

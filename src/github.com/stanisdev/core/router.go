@@ -44,17 +44,21 @@ func (self *Router) handler(w http.ResponseWriter, r *http.Request) {
   hs, exists := self.Handlers[url]
   if !exists { // First compare by simple equal
     var matches []string
-    reg, _ := regexp.Compile(":([a-z]+)") 
+    reg, _ := regexp.Compile("\\/:([a-z]+\\/??)") 
     for pattern, _ := range self.Handlers { // Compare to patterns
       if strings.Contains(pattern, ":") {
-        changedPattern := reg.ReplaceAllString(pattern, "([^\\/]+)")
+        changedPattern := reg.ReplaceAllString(pattern, "(\\/[^\\/]+)")
         re, _ := regexp.Compile("^" + changedPattern + "$") 
         matches = re.FindStringSubmatch(url)
         if len(matches) > 0 { // Pattern has found
           hs, _ = self.Handlers[pattern]
           params := reg.FindAllString(pattern, len(matches)-1)
           for key, val := range params {
-            reqData[val[1:]] = matches[key+1]
+            var reqValue string = matches[key+1]
+            if len(reqValue) > 0 {
+              reqValue = reqValue[1:]
+            }
+            reqData[val[2:]] = reqValue
           }
           break
         }
