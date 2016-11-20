@@ -5,6 +5,7 @@ import (
   "strconv"
   "github.com/stanisdev/models"
   "fmt"
+  "math"
 )
 
 /**
@@ -78,26 +79,26 @@ func Articles(w http.ResponseWriter, r *http.Request, c *Containers)  {
       offset = (p - 1) * 5
     }
   }
-  // Send 2 queries in parallel
-  ch := make(chan bool, 2)
-  go func() {
-    c.Page.Data["articles"] = c.Models.GetArticles(0, offset)
-    ch <- true
-  }()
   var count int
-  go func() {
-    c.DB.Model(&models.Article{}).Count(&count)
-    ch <- true
-  }()
-  for i := 0; i < 2; i++ {
-    <-ch
-  }
-  close(ch)
-  if count <= offset {
-    c.BadRequest = "Page does not exist"
-  }
+  c.DB.Model(&models.Article{}).Count(&count)
   c.Page.Data["count"] = count
   c.Page.Title = "Articles"
+  if count < 1 {
+    return
+  }
+  if count <= offset {
+    c.BadRequest = "Page does not exist"
+    return
+  }
+  if count > 5 {
+    pagesCount := math.Ceil(float64(count) / 5)
+    pg, _ := strconv.Atoi(page)
+    if pg < 1 {
+      pg = 1
+    }
+    c.Page.Data["pagination"] = makePagination(pg, int(pagesCount))
+  }
+  c.Page.Data["articles"] = c.Models.GetArticles(5, offset)
 }
 
 /**
@@ -127,7 +128,7 @@ func ArticleNewPost(w http.ResponseWriter, r *http.Request, c *Containers)  {
 }
 
 /**
- * Create new Article (POST)
+ * View Article (GET)
  */
 func ArticleView(w http.ResponseWriter, r *http.Request, c *Containers)  {
   // @TODO check to number (create separate function, that check whether number)

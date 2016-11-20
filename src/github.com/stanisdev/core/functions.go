@@ -12,6 +12,7 @@ import (
   "github.com/gorilla/schema"
   validator "github.com/asaskevich/govalidator"
   "strings"
+  "strconv"
 )
 
 const viewPath = "src/github.com/stanisdev/templates/"
@@ -96,7 +97,70 @@ func ValidateModel(modelInstance interface{}, formData url.Values) (bool, string
   }
 }
 
-func MakePagination(currentPage int, pageCount int) {
-  var marks []struct{Title string; Clickable bool; Number interface{}}
-  fmt.Println(marks)
+type paginationData struct {
+  Value template.HTML
+  Current bool
+  Enabled bool
+  Link int 
+}
+
+func makePagination(curPage int, pagesCount int) []paginationData {
+  middle := make([]int, 0, 4)
+  if curPage == 1 { // First
+    middle = append(middle, 1, 2)
+  } else if curPage == pagesCount { // Last
+    middle = append(middle, pagesCount - 1, pagesCount)
+  } else { // Intermediate
+    middle = append(middle, curPage - 1, curPage, curPage + 1)
+    if curPage == 3 {
+      middle = append([]int{1}, middle...)
+    } else if curPage == (curPage - 2) {
+      middle = append(middle, pagesCount)
+    }
+  }
+  prepare := make([]int, 1, 10)
+  prepare[0] = -1
+  if middle[0] > 1 { // Add first page
+    prepare = append(prepare, 1)
+    if pagesCount > 3 {
+      prepare = append(prepare, 0)
+    }
+  }
+  prepare = append(prepare, middle...)
+  if middle[len(middle) - 1] < pagesCount { // Add last page
+    if pagesCount > 3 {
+      prepare = append(prepare, 0)
+    }
+    prepare = append(prepare, pagesCount)
+  }
+  prepare = append(prepare, -2)
+  result := make([]paginationData, len(prepare))
+  for key, value := range prepare {
+    switch value {
+    case -1:
+        result[key].Value = template.HTML("&laquo;")
+        if curPage != 1 {
+          result[key].Link = curPage - 1
+          result[key].Enabled = true
+        }
+    case 0:
+        result[key].Value = "..." 
+    case -2:
+        result[key].Value = template.HTML("&raquo;")
+        if curPage < pagesCount {
+          result[key].Link = curPage + 1
+          result[key].Enabled = true
+        }
+    default:
+        result[key].Value = template.HTML(strconv.Itoa(value))
+        if value == curPage {
+          result[key].Current = true
+        } else {
+          result[key].Link = value
+          result[key].Enabled = true
+        }
+    }
+  }
+  fmt.Println(result)
+  return result
 }

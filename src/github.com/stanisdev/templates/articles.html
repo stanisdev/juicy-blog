@@ -1,29 +1,32 @@
 {{ define "content" }}
   
-  {{ range $article := .Data.articles }}
-    <a href="/article/{{ $article.Id }}">{{ $article.Title }}</a>
-    <br/>
-    {{ $article.Content }}
-    <br/>
-    <br/>
-    Author: <a href="/users/{{ $article.Userid }}">{{ $article.Username }}</a>
-    <hr/>
+  {{ if gt .Data.count 0 }}
+    {{ range $article := .Data.articles }}
+      <a href="/article/{{ $article.Id }}">{{ $article.Title }}</a>
+      <br/>
+      {{ $article.Content }}
+      <br/>
+      <br/>
+      Author: <a href="/users/{{ $article.Userid }}">{{ $article.Username }}</a>
+      <hr/>
+    {{ end }}
+  {{ else }}
+    <div>No any aritcles have been created yet</div>
   {{ end }}
 
   <!-- Pagination -->
   {{ if gt .Data.count 5 }}
     <div class="pg">
       <ul class="pagination">
-        <li class="disabled"><a href="#">&laquo;</a></li>
-        <li class="active"><a href="#">1</a></li>
-        <li><a href="#">2</a></li>
-        <li><a href="#">3</a></li>
-        <li><a href="#">4</a></li>
-        <li><a href="#">5</a></li>
-        <li><a href="#">&raquo;</a></li>
+        {{ range $mark := .Data.pagination }}
+          <li{{ if not $mark.Enabled }} {{ if $mark.Current }} class="active" {{else}} class="disabled" {{end}}{{end}}>
+            <a{{ if and ($mark.Enabled) (gt $mark.Link 0) }} href="/articles/{{$mark.Link}}" {{end}}>{{ $mark.Value }}</a>
+          </li>
+        {{ end }}
       </ul>
     </div>
   {{end}}
+
 
 {{ end }}
 {{ define "resources" }}

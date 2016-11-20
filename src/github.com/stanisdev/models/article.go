@@ -11,12 +11,15 @@ type Article struct {
   UserID uint
 }
 
+/**
+ * Get list of articles
+ */
 func (sm *StaticMethods) GetArticles(limit int, offset int) interface{} {
   var articles []struct{Id int; Title string; Content string; Userid int; Username string}
   sm.DB.Table("articles a").
     Select("a.id, a.title, a.content, u.name username, u.id userid").
     Joins("LEFT JOIN users u on a.user_id = u.id").
-    Limit(5).
+    Limit(limit).
     Offset(offset).
     Scan(&articles)
   return &articles
