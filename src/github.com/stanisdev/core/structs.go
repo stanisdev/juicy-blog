@@ -53,3 +53,16 @@ type Config struct {
     Method string
   } `json:"protected_urls"`
 }
+
+type paginationData struct {
+  Value template.HTML
+  Current bool
+  Enabled bool
+  Link int 
+}
+
+type typedRequestParams struct {
+  Name string
+  Type string
+  DefaultValue interface{}
+}

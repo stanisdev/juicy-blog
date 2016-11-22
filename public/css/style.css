@@ -16,5 +16,9 @@ div.login {
 div.pg {
   margin-left: auto;
   margin-right: auto;
-  width: 300px;
+  width: 360px;
+}
+
+.fs13 {
+  font-size: 13px;
 }

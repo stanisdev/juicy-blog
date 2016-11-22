@@ -41,6 +41,29 @@ func (c *Containers) Auth() {
   }
 }
 
+func (c *Containers) GetParamsByType(data typedRequestParams) (success bool, result interface{}) {
+  var name = data.Name
+  switch data.Type {
+    case "string":
+      success = len(c.Params[name]) > 0
+      result = c.Params[name]
+    case "int":
+      if len(c.Params[name]) > 0 {
+        value, err := strconv.Atoi(c.Params[name])
+        if err != nil {
+          c.BadRequest = strings.Title(name) + " parameter must be a number"
+        } else {
+          success = true
+          result = value
+        }
+      } else {
+        success = true
+        result = data.DefaultValue
+      }
+  }
+  return
+}
+
 /**
  * General Functions
  */
@@ -61,6 +84,9 @@ func loadTemplate(templateName string, w http.ResponseWriter, p *Page)  {
   tplFuncMap := make(template.FuncMap)
   tplFuncMap["IsArticles"] = func (url string) bool {
     return len(url) > 8 && url[:9] == "/articles"
+  }
+  tplFuncMap["DateFormat"] = func (date time.Time) string {
+    return date.Format("_2 Jan 2006 15:04:05")
   }
   t, err := template.New("").Funcs(tplFuncMap).ParseFiles(viewPath + "/layouts/layout.html", viewPath + templateName + ".html")
 
@@ -95,13 +121,6 @@ func ValidateModel(modelInstance interface{}, formData url.Values) (bool, string
   } else {
     return false, ""
   }
-}
-
-type paginationData struct {
-  Value template.HTML
-  Current bool
-  Enabled bool
-  Link int 
 }
 
 func makePagination(curPage int, pagesCount int) []paginationData {

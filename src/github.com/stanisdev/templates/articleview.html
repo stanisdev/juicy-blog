@@ -1,11 +1,13 @@
 {{ define "content" }}
   
   {{ if .Data.notFound }} 
-  111111
+    Article does not exist
   {{else}} 
   
     <h2>{{.Data.article.Title}}</h2>
     <div>{{.Data.article.Content}}</div>
+    <br><br>
+    Author: <a href="/users/{{ .Data.article.Userid }}">{{ .Data.article.Username }}</a>, Published: <span class="fs13">{{ DateFormat .Data.article.CreatedAt }}</span>
   {{end}}
 
 {{ end }}

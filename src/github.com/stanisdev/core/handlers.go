@@ -66,18 +66,20 @@ func Logout(w http.ResponseWriter, r *http.Request, c *Containers) {
 /**
  * Articles list
  */
-func Articles(w http.ResponseWriter, r *http.Request, c *Containers)  {
+func Articles(w http.ResponseWriter, r *http.Request, c *Containers)  { 
+  var page int
+  if success, p := c.GetParamsByType(typedRequestParams{Name: "page", Type: "int", DefaultValue: 1}); success == false {
+    return
+  } else {
+    page = p.(int)
+  }
+  if page < 1 {
+    c.BadRequest = "Page must be greater then zero"
+    return
+  }
   var offset int = 0
-  var page string = c.Params["page"]
-  if len(page) > 0 { // Page param exists
-    p, err := strconv.Atoi(page)
-    if err != nil {
-      c.BadRequest = "Page parameter must be a number"
-      return
-    }
-    if p > 1 {
-      offset = (p - 1) * 5
-    }
+  if page > 1 {
+    offset = (page - 1) * 5
   }
   var count int
   c.DB.Model(&models.Article{}).Count(&count)
@@ -92,13 +94,10 @@ func Articles(w http.ResponseWriter, r *http.Request, c *Containers)  {
   }
   if count > 5 {
     pagesCount := math.Ceil(float64(count) / 5)
-    pg, _ := strconv.Atoi(page)
-    if pg < 1 {
-      pg = 1
-    }
-    c.Page.Data["pagination"] = makePagination(pg, int(pagesCount))
+    c.Page.Data["pagination"] = makePagination(page, int(pagesCount))
   }
-  c.Page.Data["articles"] = c.Models.GetArticles(5, offset)
+  articles := c.Models.GetArticles(5, offset)
+  c.Page.Data["articles"] = articles
 }
 
 /**
@@ -131,16 +130,21 @@ func ArticleNewPost(w http.ResponseWriter, r *http.Request, c *Containers)  {
  * View Article (GET)
  */
 func ArticleView(w http.ResponseWriter, r *http.Request, c *Containers)  {
-  // @TODO check to number (create separate function, that check whether number)
-  id, _ := strconv.Atoi(c.Params["id"])
-  var article models.Article
-  c.DB.Find(&article, id)
-  title := "Article"
-  if article.ID < 1 {
+  var id int
+  if success, i := c.GetParamsByType(typedRequestParams{Name: "id", Type: "int", DefaultValue: nil}); success == false {
+    return
+  } else {
+    id = i.(int)
+  }
+  if id < 1 {
+    c.BadRequest = "Article id must be greater then zero"
+    return
+  }
+  if article, aId, title := c.Models.FindArticleById(id); aId < 1 {
+    c.Page.Title = "Article not found"
     c.Page.Data["notFound"] = true
   } else {
-    title += " :: " + article.Title
+    c.Page.Title = *title
     c.Page.Data["article"] = article
   }
-  c.Page.Title = title
 }

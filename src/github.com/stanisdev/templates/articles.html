@@ -2,12 +2,12 @@
   
   {{ if gt .Data.count 0 }}
     {{ range $article := .Data.articles }}
-      <a href="/article/{{ $article.Id }}">{{ $article.Title }}</a>
+      <a class="aTitle" href="/article/{{ $article.Id }}">{{ $article.Title }}</a>
       <br/>
       {{ $article.Content }}
       <br/>
       <br/>
-      Author: <a href="/users/{{ $article.Userid }}">{{ $article.Username }}</a>
+      Author: <a href="/users/{{ $article.Userid }}">{{ $article.Username }}</a>, Published: <span class="fs13">{{ DateFormat $article.CreatedAt }}</span>
       <hr/>
     {{ end }}
   {{ else }}
