@@ -24,5 +24,8 @@ func main() {
   router.GET("/articles/new", core.ArticleNew)
   router.POST("/articles/new", core.ArticleNewPost)
   router.GET("/article/:id", core.ArticleView)
+  router.GET("/article/:id/edit", core.ArticleEdit)
+  router.POST("/article/:id/edit", core.ArticleEditPost)
+  router.POST("/article/:id/remove", core.ArticleRemovePost)
   router.Start()
 }

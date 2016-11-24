@@ -1,0 +1,35 @@
+{{ define "content" }}
+
+  {{ if .Data.isResctrictedEdit }} 
+    Article does not exist or you cannot edit it
+  {{else}} 
+    <div class="login align-center">
+      <form class="form-horizontal" method="post" action="/article/{{ .Data.article.ID }}/edit">
+        <fieldset>
+          <div class="form-group">
+            <label for="title" class="col-lg-2 control-label">Title</label>
+            <div class="col-lg-10">
+              <input type="text" class="form-control" id="title" value="{{.Data.article.Title}}" name="title" placeholder="Title">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="content" class="col-lg-2 control-label">Content</label>
+            <div class="col-lg-10">
+              <textarea class="form-control" rows="3" id="content" name="content" style="height: 150px;">{{.Data.article.Content}}</textarea>
+              <span class="help-block">Put article's content in this field.</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="col-lg-10 col-lg-offset-2">
+              <button type="submit" class="btn btn-primary">Save</button>
+            </div>
+          </div>
+        </fieldset>
+      </form>
+    </div>
+  {{end}}
+
+{{ end }}
+{{ define "resources" }}
+  <!-- Define script or styles here -->
+{{ end }}

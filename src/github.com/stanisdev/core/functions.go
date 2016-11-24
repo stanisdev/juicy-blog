@@ -41,7 +41,7 @@ func (c *Containers) Auth() {
   }
 }
 
-func (c *Containers) GetParamsByType(data typedRequestParams) (success bool, result interface{}) {
+func (c *Containers) GetParamByType(data typedRequestParam) (success bool, result interface{}) {
   var name = data.Name
   switch data.Type {
     case "string":
@@ -52,6 +52,8 @@ func (c *Containers) GetParamsByType(data typedRequestParams) (success bool, res
         value, err := strconv.Atoi(c.Params[name])
         if err != nil {
           c.BadRequest = strings.Title(name) + " parameter must be a number"
+        } else if value < 1 {
+          c.BadRequest = strings.Title(name) + " parameter must be greater then zero"
         } else {
           success = true
           result = value
@@ -88,8 +90,10 @@ func loadTemplate(templateName string, w http.ResponseWriter, p *Page)  {
   tplFuncMap["DateFormat"] = func (date time.Time) string {
     return date.Format("_2 Jan 2006 15:04:05")
   }
+  tplFuncMap["ChangeToBr"] = func (value string) interface{} {
+    return template.HTML(strings.Replace(value, "\n", "<br/>", -1))
+  }
   t, err := template.New("").Funcs(tplFuncMap).ParseFiles(viewPath + "/layouts/layout.html", viewPath + templateName + ".html")
-
   if err != nil {
     fmt.Fprintf(w, "Template cannot be loaded")
   }
@@ -180,6 +184,5 @@ func makePagination(curPage int, pagesCount int) []paginationData {
         }
     }
   }
-  fmt.Println(result)
   return result
 }

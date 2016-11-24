@@ -6,6 +6,7 @@ import (
   "github.com/stanisdev/models"
   "fmt"
   "math"
+  "time"
 )
 
 /**
@@ -68,7 +69,7 @@ func Logout(w http.ResponseWriter, r *http.Request, c *Containers) {
  */
 func Articles(w http.ResponseWriter, r *http.Request, c *Containers)  { 
   var page int
-  if success, p := c.GetParamsByType(typedRequestParams{Name: "page", Type: "int", DefaultValue: 1}); success == false {
+  if success, p := c.GetParamByType(typedRequestParam{Name: "page", Type: "int", DefaultValue: 1}); success == false {
     return
   } else {
     page = p.(int)
@@ -130,21 +131,84 @@ func ArticleNewPost(w http.ResponseWriter, r *http.Request, c *Containers)  {
  * View Article (GET)
  */
 func ArticleView(w http.ResponseWriter, r *http.Request, c *Containers)  {
+  success, id := c.GetParamByType(typedRequestParam{Name: "id", Type: "int", DefaultValue: nil})
+  if success == false {
+    return
+  }
+  var article struct{ID uint; Title string; Content string; CreatedAt time.Time; Userid uint; Username string}
+  c.Models.FindArticleById(&article, id.(int))
+  if article.ID < 1 {
+    c.Page.Title = "Article not found"
+    c.Page.Data["notFound"] = true
+  } else {
+    c.Page.Title = article.Title
+    c.Page.Data["article"] = article
+    c.Page.Data["canEdit"] = article.Userid == c.Page.User.ID
+  }
+}
+
+/**
+ * Edit Article (GET)
+ */
+func ArticleEdit(w http.ResponseWriter, r *http.Request, c *Containers)  {
+  success, id := c.GetParamByType(typedRequestParam{Name: "id", Type: "int", DefaultValue: nil})
+  if success == false {
+    return
+  }
+  var article models.Article
+  c.DB.Find(&article, id.(int))
+  if article.ID < 1 || article.UserID != c.Page.User.ID {
+    c.Page.Title = "Not allowed to edit"
+    c.Page.Data["isResctrictedEdit"] = true
+  } else {
+    c.Page.Title = "Editing :: " + article.Title
+    c.Page.Data["article"] = article
+  }
+}
+
+/**
+ * Edit Article (POST)
+ */
+func ArticleEditPost(w http.ResponseWriter, r *http.Request, c *Containers)  {
   var id int
-  if success, i := c.GetParamsByType(typedRequestParams{Name: "id", Type: "int", DefaultValue: nil}); success == false {
+  if success, i := c.GetParamByType(typedRequestParam{Name: "id", Type: "int", DefaultValue: nil}); success == false {
     return
   } else {
     id = i.(int)
   }
-  if id < 1 {
-    c.BadRequest = "Article id must be greater then zero"
+  var article models.Article
+  c.DB.Find(&article, id)
+  if article.ID < 1 || article.UserID != c.Page.User.ID {
+    c.SetFlash("Not allowed to edit")
+    http.Redirect(w, r, "/articles", 302)
     return
   }
-  if article, aId, title := c.Models.FindArticleById(id); aId < 1 {
-    c.Page.Title = "Article not found"
-    c.Page.Data["notFound"] = true
+  r.ParseForm()
+  article.Title = r.FormValue("title")
+  article.Content = r.FormValue("content") 
+  if hasError, message := ValidateModel(&article, r.PostForm); hasError == true {
+    c.SetFlash(message)
   } else {
-    c.Page.Title = *title
-    c.Page.Data["article"] = article
+    c.DB.Save(&article)
+    id = int(article.ID) // Because: https://github.com/jinzhu/gorm/blob/master/main.go#L390
   }
+  http.Redirect(w, r, "/article/" + strconv.Itoa(id) + "/edit", 302)
+}
+
+ /**
+  * Remove Article (POST)
+  */
+func ArticleRemovePost(w http.ResponseWriter, r *http.Request, c *Containers)  {
+  success, id := c.GetParamByType(typedRequestParam{Name: "id", Type: "int", DefaultValue: nil})
+  if success == false {
+    return
+  }
+  var article models.Article
+  c.DB.Find(&article, id.(int))
+  if article.ID < 1 || article.UserID != c.Page.User.ID {
+    c.SetFlash("Not allowed to remove")
+  } else {
+    c.DB.Unscoped().Delete(&article, "`id` = ?", article.ID)
+  }
+  http.Redirect(w, r, "/articles", 302)
 }

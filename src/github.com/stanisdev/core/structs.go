@@ -61,7 +61,7 @@ type paginationData struct {
   Link int 
 }
 
-type typedRequestParams struct {
+type typedRequestParam struct {
   Name string
   Type string
   DefaultValue interface{}
