@@ -85,7 +85,7 @@ func loadTemplate(templateName string, w http.ResponseWriter, p *Page)  {
   w.Header().Set("Content-type", "text/html")
   tplFuncMap := make(template.FuncMap)
   tplFuncMap["IsArticles"] = func (url string) bool {
-    return len(url) > 8 && url[:9] == "/articles"
+    return len(url) > 7 && url[:8] == "/article"
   }
   tplFuncMap["DateFormat"] = func (date time.Time) string {
     return date.Format("_2 Jan 2006 15:04:05")

@@ -7,7 +7,7 @@
     <h2>{{.Data.article.Title}}</h2>
     <div>{{ ChangeToBr .Data.article.Content}}</div>
     <br><br>
-    Author: <a href="/users/{{ .Data.article.Userid }}">{{ .Data.article.Username }}</a>, Published: <span class="fs13">{{ DateFormat .Data.article.CreatedAt }}</span>, 
+    Author: <a href="/profile/{{ .Data.article.Userid }}">{{ .Data.article.Username }}</a>, Published: <span class="fs13">{{ DateFormat .Data.article.CreatedAt }}</span>, 
     {{ if .Data.canEdit }}
       <form style="display: inline" id="removeArticle" action="/article/{{ .Data.article.ID }}/remove" method="post">
         <a href="/article/{{ .Data.article.ID }}/edit">Edit</a>, <a href="#" onclick="document.getElementById('removeArticle').submit();">Remove</a>

@@ -1,5 +1,7 @@
 {{ define "content" }}
   
+  <h1>Articles</h1>
+
   {{ if gt .Data.count 0 }}
     {{ range $article := .Data.articles }}
       <a class="aTitle" href="/article/{{ $article.Id }}">{{ $article.Title }}</a>
@@ -7,7 +9,7 @@
       {{ $article.Content }}
       <br/>
       <br/>
-      Author: <a href="/users/{{ $article.Userid }}">{{ $article.Username }}</a>, Published: <span class="fs13">{{ DateFormat $article.CreatedAt }}</span>
+      Author: <a href="/profile/{{ $article.Userid }}">{{ $article.Username }}</a>, Published: <span class="fs13">{{ DateFormat $article.CreatedAt }}</span>
       <hr/>
     {{ end }}
   {{ else }}

@@ -13,6 +13,22 @@ import (
  * Index page
  */
 func Index(w http.ResponseWriter, r *http.Request, c *Containers) {
+  var articlesCount, usersCount int
+  ch := make(chan bool, 2) // Sending 2 queries in parallel
+  go func() {
+    c.DB.Model(models.Article{}).Count(&articlesCount)
+    ch <- true
+  }()
+  go func() {
+    c.DB.Model(models.User{}).Count(&usersCount)
+    ch <- true
+  }()
+  for i := 0; i < 2; i++ {
+    <-ch
+  }
+  close(ch)
+  c.Page.Data["ArticlesCount"] = articlesCount
+  c.Page.Data["UsersCount"] = usersCount
   c.Page.Title = "Mutual Blog"
 }
 
@@ -67,7 +83,7 @@ func Logout(w http.ResponseWriter, r *http.Request, c *Containers) {
 /**
  * Articles list
  */
-func Articles(w http.ResponseWriter, r *http.Request, c *Containers)  { 
+func Articles(w http.ResponseWriter, r *http.Request, c *Containers)  {
   var page int
   if success, p := c.GetParamByType(typedRequestParam{Name: "page", Type: "int", DefaultValue: 1}); success == false {
     return
@@ -83,7 +99,7 @@ func Articles(w http.ResponseWriter, r *http.Request, c *Containers)  {
     offset = (page - 1) * 5
   }
   var count int
-  c.DB.Model(&models.Article{}).Count(&count)
+  c.DB.Model(models.Article{}).Count(&count)
   c.Page.Data["count"] = count
   c.Page.Title = "Articles"
   if count < 1 {
@@ -114,10 +130,10 @@ func ArticleNew(w http.ResponseWriter, r *http.Request, c *Containers)  {
 func ArticleNewPost(w http.ResponseWriter, r *http.Request, c *Containers)  {
   r.ParseForm()
   var article models.Article
+  article.UserID = c.Page.User.ID
   if hasError, message := ValidateModel(&article, r.PostForm); hasError == true {
     c.SetFlash(message)
   } else {
-    article.UserID = c.Page.User.ID
     c.DB.Create(&article)
     if article.ID < 1 {
       c.SetFlash("Article cannot be created")
@@ -211,4 +227,22 @@ func ArticleRemovePost(w http.ResponseWriter, r *http.Request, c *Containers)  {
     c.DB.Unscoped().Delete(&article, "`id` = ?", article.ID)
   }
   http.Redirect(w, r, "/articles", 302)
+}
+
+ /**
+  * View Profile
+  */
+func ProfileView(w http.ResponseWriter, r *http.Request, c *Containers)  {
+  success, id := c.GetParamByType(typedRequestParam{Name: "id", Type: "int", DefaultValue: nil})
+  if success == false {
+    return
+  }
+  var user models.User
+  c.DB.Find(&user, id)
+  if user.ID < 1 {
+    c.Page.Data["notFound"] = true
+  } else {
+    c.Page.Data["user"] = user
+  }
+  c.Page.Title = "View user profile"
 }

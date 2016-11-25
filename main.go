@@ -15,6 +15,7 @@ func main() {
   router := core.Router{Handlers: make(map[string]map[string]core.RouterHandler)}
   router.Config = core.GetConfig()
   db.DatabaseMigrate(router.Config.DbUser, router.Config.DbPass, router.Config.DbName)
+  //db.ImportFixtures(router.Config.DbUser, router.Config.DbPass, router.Config.DbName)
   
   router.GET("/", core.Index)
   router.GET("/login", core.Login)
@@ -27,5 +28,6 @@ func main() {
   router.GET("/article/:id/edit", core.ArticleEdit)
   router.POST("/article/:id/edit", core.ArticleEditPost)
   router.POST("/article/:id/remove", core.ArticleRemovePost)
+  router.GET("/profile/:id", core.ProfileView)
   router.Start()
 }

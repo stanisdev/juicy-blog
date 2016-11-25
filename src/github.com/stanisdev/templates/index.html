@@ -1,5 +1,13 @@
 {{ define "content" }}
-  Home page
+
+  <h1>Welcome</h1>
+
+  It's our mutual blog. There is a lot of information.
+  <br/>
+  <br/>
+  Articles: {{ .Data.ArticlesCount }}
+  <br/>
+  Users: {{ .Data.UsersCount }}
 {{ end }}
 {{ define "resources" }}
   <!-- Define script or styles here -->

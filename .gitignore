@@ -32,3 +32,4 @@ _testmain.go
 /src/github.com/go-sql-driver/
 /src/github.com/asaskevich/
 /src/github.com/gorilla/
+/src/gopkg.in/

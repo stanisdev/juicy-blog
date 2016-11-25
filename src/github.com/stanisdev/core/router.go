@@ -80,7 +80,7 @@ func (self *Router) handler(w http.ResponseWriter, r *http.Request) {
   c := &Containers{
     DB: dbConnection, 
     Models: models.StaticMethods{DB: dbConnection}, 
-    Session: SessionManager{DB: dbConnection}, 
+    Session: SessionManager{}, 
     Page: Page{},
     Params: reqData,
   }

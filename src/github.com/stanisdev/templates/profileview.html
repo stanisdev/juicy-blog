@@ -1,0 +1,18 @@
+{{ define "content" }}
+  
+  {{ if .Data.notFound }}
+    User does not exist
+  {{ else }}
+    <h1>User profile</h1>
+
+    Name: {{ .Data.user.Name }}
+    <br/>
+    Email: {{ .Data.user.Email }}
+    <br/>
+    Registered: {{ DateFormat .Data.user.CreatedAt }}
+  {{ end }}
+
+{{ end }}
+{{ define "resources" }}
+  <!-- Define script or styles here -->
+{{ end }}
