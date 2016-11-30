@@ -96,6 +96,12 @@ func (self *Router) handler(w http.ResponseWriter, r *http.Request) {
       return
     }
   }
+  defer func() {
+    if message := recover(); message != nil {
+      w.WriteHeader(http.StatusBadRequest)
+      fmt.Fprint(w, message)
+    }
+  }()
   h(w, r, c)
   if len(c.BadRequest) > 0 { // Some intolerable errors
     w.WriteHeader(http.StatusBadRequest)

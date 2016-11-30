@@ -7,6 +7,7 @@ import (
   "fmt"
   "math"
   "time"
+  "sync"
 )
 
 /**
@@ -14,19 +15,17 @@ import (
  */
 func Index(w http.ResponseWriter, r *http.Request, c *Containers) {
   var articlesCount, usersCount int
-  ch := make(chan bool, 2) // Sending 2 queries in parallel
+  waitGroup := sync.WaitGroup{}
+  waitGroup.Add(2)
   go func() {
     c.DB.Model(models.Article{}).Count(&articlesCount)
-    ch <- true
+    waitGroup.Done()
   }()
   go func() {
     c.DB.Model(models.User{}).Count(&usersCount)
-    ch <- true
+    waitGroup.Done()
   }()
-  for i := 0; i < 2; i++ {
-    <-ch
-  }
-  close(ch)
+  waitGroup.Wait()
   c.Page.Data["ArticlesCount"] = articlesCount
   c.Page.Data["UsersCount"] = usersCount
   c.Page.Title = "Mutual Blog"
@@ -84,12 +83,7 @@ func Logout(w http.ResponseWriter, r *http.Request, c *Containers) {
  * Articles list
  */
 func Articles(w http.ResponseWriter, r *http.Request, c *Containers)  {
-  var page int
-  if success, p := c.GetParamByType(typedRequestParam{Name: "page", Type: "int", DefaultValue: 1}); success == false {
-    return
-  } else {
-    page = p.(int)
-  }
+  page := c.GetParamByType(typedRequestParam{Name: "page", Type: "int", DefaultValue: 1}).(int)
   if page < 1 {
     c.BadRequest = "Page must be greater then zero"
     return
@@ -134,25 +128,23 @@ func ArticleNewPost(w http.ResponseWriter, r *http.Request, c *Containers)  {
   if hasError, message := ValidateModel(&article, r.PostForm); hasError == true {
     c.SetFlash(message)
   } else {
-    c.DB.Create(&article)
-    if article.ID < 1 {
+    if err := c.DB.Create(&article).Error; err != nil {
       c.SetFlash("Article cannot be created")
+      http.Redirect(w, r, "/articles/new", 302)
+    } else {
+      http.Redirect(w, r, "/article/" + strconv.Itoa(int(article.ID)), 302)
     }
   }
   fmt.Println("Posted")
-  http.Redirect(w, r, "/articles/new", 302)
 }
 
 /**
  * View Article (GET)
  */
 func ArticleView(w http.ResponseWriter, r *http.Request, c *Containers)  {
-  success, id := c.GetParamByType(typedRequestParam{Name: "id", Type: "int", DefaultValue: nil})
-  if success == false {
-    return
-  }
+  id := c.GetParamByType(typedRequestParam{Name: "id", Type: "int", DefaultValue: nil}).(int)
   var article struct{ID uint; Title string; Content string; CreatedAt time.Time; Userid uint; Username string}
-  c.Models.FindArticleById(&article, id.(int))
+  c.Models.FindArticleById(&article, id)
   if article.ID < 1 {
     c.Page.Title = "Article not found"
     c.Page.Data["notFound"] = true
@@ -167,12 +159,9 @@ func ArticleView(w http.ResponseWriter, r *http.Request, c *Containers)  {
  * Edit Article (GET)
  */
 func ArticleEdit(w http.ResponseWriter, r *http.Request, c *Containers)  {
-  success, id := c.GetParamByType(typedRequestParam{Name: "id", Type: "int", DefaultValue: nil})
-  if success == false {
-    return
-  }
+  id := c.GetParamByType(typedRequestParam{Name: "id", Type: "int", DefaultValue: nil}).(int)
   var article models.Article
-  c.DB.Find(&article, id.(int))
+  c.DB.Find(&article, id)
   if article.ID < 1 || article.UserID != c.Page.User.ID {
     c.Page.Title = "Not allowed to edit"
     c.Page.Data["isResctrictedEdit"] = true
@@ -186,12 +175,7 @@ func ArticleEdit(w http.ResponseWriter, r *http.Request, c *Containers)  {
  * Edit Article (POST)
  */
 func ArticleEditPost(w http.ResponseWriter, r *http.Request, c *Containers)  {
-  var id int
-  if success, i := c.GetParamByType(typedRequestParam{Name: "id", Type: "int", DefaultValue: nil}); success == false {
-    return
-  } else {
-    id = i.(int)
-  }
+  id := c.GetParamByType(typedRequestParam{Name: "id", Type: "int", DefaultValue: nil}).(int)
   var article models.Article
   c.DB.Find(&article, id)
   if article.ID < 1 || article.UserID != c.Page.User.ID {
@@ -215,16 +199,15 @@ func ArticleEditPost(w http.ResponseWriter, r *http.Request, c *Containers)  {
   * Remove Article (POST)
   */
 func ArticleRemovePost(w http.ResponseWriter, r *http.Request, c *Containers)  {
-  success, id := c.GetParamByType(typedRequestParam{Name: "id", Type: "int", DefaultValue: nil})
-  if success == false {
-    return
-  }
+  id := c.GetParamByType(typedRequestParam{Name: "id", Type: "int", DefaultValue: nil}).(int)
   var article models.Article
-  c.DB.Find(&article, id.(int))
+  c.DB.Find(&article, id)
   if article.ID < 1 || article.UserID != c.Page.User.ID {
     c.SetFlash("Not allowed to remove")
   } else {
-    c.DB.Unscoped().Delete(&article, "`id` = ?", article.ID)
+    if err := c.DB.Unscoped().Delete(&article).Error; err != nil {
+      c.SetFlash("Article was not removed")
+    }
   }
   http.Redirect(w, r, "/articles", 302)
 }
@@ -233,10 +216,7 @@ func ArticleRemovePost(w http.ResponseWriter, r *http.Request, c *Containers)  {
   * View Profile
   */
 func ProfileView(w http.ResponseWriter, r *http.Request, c *Containers)  {
-  success, id := c.GetParamByType(typedRequestParam{Name: "id", Type: "int", DefaultValue: nil})
-  if success == false {
-    return
-  }
+  id := c.GetParamByType(typedRequestParam{Name: "id", Type: "int", DefaultValue: nil}).(int)
   var user models.User
   c.DB.Find(&user, id)
   if user.ID < 1 {

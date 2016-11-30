@@ -41,25 +41,22 @@ func (c *Containers) Auth() {
   }
 }
 
-func (c *Containers) GetParamByType(data typedRequestParam) (success bool, result interface{}) {
+func (c *Containers) GetParamByType(data typedRequestParam) (result interface{}) {
   var name = data.Name
   switch data.Type {
     case "string":
-      success = len(c.Params[name]) > 0
       result = c.Params[name]
     case "int":
       if len(c.Params[name]) > 0 {
         value, err := strconv.Atoi(c.Params[name])
         if err != nil {
-          c.BadRequest = strings.Title(name) + " parameter must be a number"
+          panic(strings.Title(name) + " parameter must be a number")
         } else if value < 1 {
-          c.BadRequest = strings.Title(name) + " parameter must be greater then zero"
+          panic(strings.Title(name) + " parameter must be greater then zero")
         } else {
-          success = true
           result = value
         }
       } else {
-        success = true
         result = data.DefaultValue
       }
   }
