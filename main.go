@@ -7,34 +7,25 @@
 package main
 
 import (
-  "github.com/stanisdev/core"
-  "github.com/stanisdev/db"
-  "os"
-) 
+  "github.com/stanisdev/juicy-blog/services"
+  "github.com/stanisdev/juicy-blog/handlers"
+)
 
-func main() {
-  router := core.Router{Handlers: make(map[string]map[string]core.RouterHandler)}
-  router.Config = core.GetConfig()
-  if len(os.Getenv("DB_MIGRATE")) > 0 {
-    db.DatabaseMigrate(router.Config.DbUser, router.Config.DbPass, router.Config.DbName)
-    return
-  }
-  if len(os.Getenv("LOAD_FIXTURES")) > 0 {
-    db.ImportFixtures(router.Config.DbUser, router.Config.DbPass, router.Config.DbName)
-    return
-  }
+func main()  {
+  router := services.Router { Handlers: make(map[string] map[string] services.RouterHandler) }
+  router.Init()
 
-  router.GET("/", core.Index)
-  router.GET("/login", core.Login)
-  router.POST("/login", core.LoginPost)
-  router.GET("/logout", core.Logout)
-  router.GET("/articles/:page?", core.Articles)
-  router.GET("/articles/new", core.ArticleNew)
-  router.POST("/articles/new", core.ArticleNewPost)
-  router.GET("/article/:id", core.ArticleView)
-  router.GET("/article/:id/edit", core.ArticleEdit)
-  router.POST("/article/:id/edit", core.ArticleEditPost)
-  router.POST("/article/:id/remove", core.ArticleRemovePost)
-  router.GET("/profile/:id", core.ProfileView)
-  router.Start()
+  router.GET("/", handlers.Index)
+  router.GET("/login", handlers.Login)
+  router.POST("/login", handlers.LoginPost)
+  router.GET("/logout", handlers.Logout)
+  router.GET("/articles/:page?", handlers.Articles)
+  router.GET("/articles/new", handlers.ArticleNew)
+  router.POST("/articles/new", handlers.ArticleNewPost)
+  router.GET("/article/:id", handlers.ArticleView)
+  router.GET("/article/:id/edit", handlers.ArticleEdit)
+  router.POST("/article/:id/edit", handlers.ArticleEditPost)
+  router.POST("/article/:id/remove", handlers.ArticleRemovePost)
+  router.GET("/profile/:id", handlers.ProfileView)
+  router.Run()
 }

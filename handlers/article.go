@@ -1,19 +1,19 @@
-package core
+package handlers
 
 import (
   "net/http"
-  "strconv"
-  "github.com/stanisdev/models"
-  "fmt"
-  "math"
-  "time"
+  "github.com/stanisdev/juicy-blog/services"
+  "github.com/stanisdev/juicy-blog/models"
   "sync"
+  "math"
+  "strconv"
+  "time"
 )
 
 /**
  * Index page
  */
-func Index(w http.ResponseWriter, r *http.Request, c *Containers) {
+func Index(w http.ResponseWriter, r *http.Request, c *services.Containers) {
   var articlesCount, usersCount int
   waitGroup := sync.WaitGroup{}
   waitGroup.Add(2)
@@ -32,58 +32,10 @@ func Index(w http.ResponseWriter, r *http.Request, c *Containers) {
 }
 
 /**
- * Login page
- */
-func Login(w http.ResponseWriter, r *http.Request, c *Containers) {
-  if c.Page.User.Authorized() {
-    http.Redirect(w, r, "/", 302)
-    return
-  }
-  c.Page.Title = "Login to Blog"
-  c.Page.Data["name"] = "John"
-}
-
-/**
- * Login (POST)
- */
-func LoginPost(w http.ResponseWriter, r *http.Request, c *Containers) {
-  if c.Page.User.Authorized() {
-    http.Redirect(w, r, "/", 302)
-    return
-  }
-  r.ParseForm()
-  data := r.Form
-  _, email := data["email"];
-  _, password := data["password"];
-  if !email || len(r.FormValue("email")) < 1 || !password || len(r.FormValue("password")) < 1 {
-    c.SetFlash("Email or Password was not specified")
-    http.Redirect(w, r, "/login", 302)
-    return
-  }
-  var user models.User
-  c.DB.First(&user, "email = ?", data["email"])
-  if user.ID < 1 || !user.ComparePassword(r.FormValue("password")) {
-    c.SetFlash("Incorrect Email or Password")
-    http.Redirect(w, r, "/login", 302)
-    return
-  }
-  c.Session.Set("user", strconv.Itoa(int(user.ID)))
-  http.Redirect(w, r, "/", 302)
-}
-
-/**
- * Logout page
- */
-func Logout(w http.ResponseWriter, r *http.Request, c *Containers) {
-  c.Session.Unset("user")
-  http.Redirect(w, r, "/login", 302)
-}
-
-/**
  * Articles list
  */
-func Articles(w http.ResponseWriter, r *http.Request, c *Containers)  {
-  page := c.GetParamByType(typedRequestParam{Name: "page", Type: "int", DefaultValue: 1}).(int)
+func Articles(w http.ResponseWriter, r *http.Request, c *services.Containers) {
+  page := c.GetParamByType(services.TypedRequestParam{ Name: "page", Type: "int", DefaultValue: 1 }).(int)
   if page < 1 {
     c.BadRequest = "Page must be greater then zero"
     return
@@ -105,7 +57,7 @@ func Articles(w http.ResponseWriter, r *http.Request, c *Containers)  {
   }
   if count > 5 {
     pagesCount := math.Ceil(float64(count) / 5)
-    c.Page.Data["pagination"] = makePagination(page, int(pagesCount))
+    c.Page.Data["pagination"] = services.MakePagination(page, int(pagesCount))
   }
   articles := c.Models.GetArticles(5, offset)
   c.Page.Data["articles"] = articles
@@ -114,19 +66,20 @@ func Articles(w http.ResponseWriter, r *http.Request, c *Containers)  {
 /**
  * Create new Article
  */
-func ArticleNew(w http.ResponseWriter, r *http.Request, c *Containers)  {
+func ArticleNew(w http.ResponseWriter, r *http.Request, c *services.Containers) {
   c.Page.Title = "New Article"
 }
 
 /**
  * Create new Article (POST)
  */
-func ArticleNewPost(w http.ResponseWriter, r *http.Request, c *Containers)  {
+func ArticleNewPost(w http.ResponseWriter, r *http.Request, c *services.Containers) {
   r.ParseForm()
   var article models.Article
   article.UserID = c.Page.User.ID
-  if hasError, message := ValidateModel(&article, r.PostForm); hasError == true {
+  if hasError, message := services.ValidateModel(&article, r.PostForm); hasError == true {
     c.SetFlash(message)
+    http.Redirect(w, r, "/articles/new", 302)
   } else {
     if err := c.DB.Create(&article).Error; err != nil {
       c.SetFlash("Article cannot be created")
@@ -135,16 +88,16 @@ func ArticleNewPost(w http.ResponseWriter, r *http.Request, c *Containers)  {
       http.Redirect(w, r, "/article/" + strconv.Itoa(int(article.ID)), 302)
     }
   }
-  fmt.Println("Posted")
 }
 
 /**
  * View Article (GET)
  */
-func ArticleView(w http.ResponseWriter, r *http.Request, c *Containers)  {
-  id := c.GetParamByType(typedRequestParam{Name: "id", Type: "int", DefaultValue: nil}).(int)
+func ArticleView(w http.ResponseWriter, r *http.Request, c *services.Containers) {
+  id := c.GetParamByType(services.TypedRequestParam{ Name: "id", Type: "int", DefaultValue: nil }).(int)
   var article struct{ID uint; Title string; Content string; CreatedAt time.Time; Userid uint; Username string}
   c.Models.FindArticleById(&article, id)
+
   if article.ID < 1 {
     c.Page.Title = "Article not found"
     c.Page.Data["notFound"] = true
@@ -158,10 +111,11 @@ func ArticleView(w http.ResponseWriter, r *http.Request, c *Containers)  {
 /**
  * Edit Article (GET)
  */
-func ArticleEdit(w http.ResponseWriter, r *http.Request, c *Containers)  {
-  id := c.GetParamByType(typedRequestParam{Name: "id", Type: "int", DefaultValue: nil}).(int)
+func ArticleEdit(w http.ResponseWriter, r *http.Request, c *services.Containers) {
+  id := c.GetParamByType(services.TypedRequestParam{ Name: "id", Type: "int", DefaultValue: nil }).(int)
   var article models.Article
   c.DB.Find(&article, id)
+
   if article.ID < 1 || article.UserID != c.Page.User.ID {
     c.Page.Title = "Not allowed to edit"
     c.Page.Data["isResctrictedEdit"] = true
@@ -174,8 +128,8 @@ func ArticleEdit(w http.ResponseWriter, r *http.Request, c *Containers)  {
 /**
  * Edit Article (POST)
  */
-func ArticleEditPost(w http.ResponseWriter, r *http.Request, c *Containers)  {
-  id := c.GetParamByType(typedRequestParam{Name: "id", Type: "int", DefaultValue: nil}).(int)
+func ArticleEditPost(w http.ResponseWriter, r *http.Request, c *services.Containers) {
+  id := c.GetParamByType(services.TypedRequestParam{ Name: "id", Type: "int", DefaultValue: nil }).(int)
   var article models.Article
   c.DB.Find(&article, id)
   if article.ID < 1 || article.UserID != c.Page.User.ID {
@@ -185,8 +139,8 @@ func ArticleEditPost(w http.ResponseWriter, r *http.Request, c *Containers)  {
   }
   r.ParseForm()
   article.Title = r.FormValue("title")
-  article.Content = r.FormValue("content") 
-  if hasError, message := ValidateModel(&article, r.PostForm); hasError == true {
+  article.Content = r.FormValue("content")
+  if hasError, message := services.ValidateModel(&article, r.PostForm); hasError == true {
     c.SetFlash(message)
   } else {
     c.DB.Save(&article)
@@ -195,13 +149,14 @@ func ArticleEditPost(w http.ResponseWriter, r *http.Request, c *Containers)  {
   http.Redirect(w, r, "/article/" + strconv.Itoa(id) + "/edit", 302)
 }
 
- /**
-  * Remove Article (POST)
-  */
-func ArticleRemovePost(w http.ResponseWriter, r *http.Request, c *Containers)  {
-  id := c.GetParamByType(typedRequestParam{Name: "id", Type: "int", DefaultValue: nil}).(int)
+/**
+ * Remove Article (POST)
+ */
+func ArticleRemovePost(w http.ResponseWriter, r *http.Request, c *services.Containers) {
+  id := c.GetParamByType(services.TypedRequestParam{ Name: "id", Type: "int", DefaultValue: nil }).(int)
   var article models.Article
   c.DB.Find(&article, id)
+
   if article.ID < 1 || article.UserID != c.Page.User.ID {
     c.SetFlash("Not allowed to remove")
   } else {
@@ -212,13 +167,14 @@ func ArticleRemovePost(w http.ResponseWriter, r *http.Request, c *Containers)  {
   http.Redirect(w, r, "/articles", 302)
 }
 
- /**
-  * View Profile
-  */
-func ProfileView(w http.ResponseWriter, r *http.Request, c *Containers)  {
-  id := c.GetParamByType(typedRequestParam{Name: "id", Type: "int", DefaultValue: nil}).(int)
+/**
+ * View Profile
+ */
+func ProfileView(w http.ResponseWriter, r *http.Request, c *services.Containers) {
+  id := c.GetParamByType(services.TypedRequestParam{ Name: "id", Type: "int", DefaultValue: nil }).(int)
   var user models.User
   c.DB.Find(&user, id)
+
   if user.ID < 1 {
     c.Page.Data["notFound"] = true
   } else {

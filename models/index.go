@@ -4,6 +4,6 @@ import (
   "github.com/jinzhu/gorm"
 )
 
-type StaticMethods struct {
+type DatabaseStaticMethods struct {
   DB *gorm.DB
 }

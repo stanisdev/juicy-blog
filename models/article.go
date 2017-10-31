@@ -16,7 +16,7 @@ type Article struct {
 /**
  * Get list of articles
  */
-func (sm *StaticMethods) GetArticles(limit int, offset int) interface{} {
+func (sm *DatabaseStaticMethods) GetArticles(limit int, offset int) interface{} {
   var articles []struct{Id int; Title string; Content string; CreatedAt time.Time; Userid int; Username string}
   sm.DB.Table("articles a").
     Select("a.id, a.title, SUBSTR(a.content, 1, 190) AS content, a.created_at, u.name username, u.id userid").
@@ -37,7 +37,7 @@ func (sm *StaticMethods) GetArticles(limit int, offset int) interface{} {
 /**
  * Find article by id
  */
-func (sm *StaticMethods) FindArticleById(article interface{}, id int) {
+func (sm *DatabaseStaticMethods) FindArticleById(article interface{}, id int) {
   sm.DB.Table("articles a").
     Select("a.id, a.title, a.content, a.created_at, u.name username, u.id userid").
     Joins("LEFT JOIN users u ON a.user_id = u.id").

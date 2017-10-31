@@ -1,4 +1,4 @@
-package core
+package services
 
 import (
   redis "gopkg.in/redis.v5"
@@ -14,7 +14,7 @@ type SessionManager struct {
 func (sm *SessionManager) Start(w http.ResponseWriter, r *http.Request) {
   cookie, _ := r.Cookie("sid")
   if len(cookie.String()) < 1 { // Set sid
-    sm.createCookie(w)  
+    sm.createCookie(w)
   } else {
     sm.sid = cookie.Value
   }
@@ -28,7 +28,11 @@ func (sm *SessionManager) Start(w http.ResponseWriter, r *http.Request) {
 func (sm *SessionManager) createCookie(w http.ResponseWriter) {
   sid := GenerateRandomString(40)
   expiration := time.Now().Add(365 * 24 * time.Hour)
-  cookie := http.Cookie{Name: "sid", Value: sid, Expires: expiration}
+  cookie := http.Cookie{
+    Name: "sid",
+    Value: sid,
+    Expires: expiration,
+  }
   http.SetCookie(w, &cookie)
   sm.sid = sid
 }
