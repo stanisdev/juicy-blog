@@ -5,6 +5,7 @@ import (
   "github.com/stanisdev/juicy-blog/services"
   "github.com/stanisdev/juicy-blog/models"
   "strconv"
+  "fmt"
 )
 
 /**
@@ -52,5 +53,29 @@ func LoginPost(w http.ResponseWriter, r *http.Request, c *services.Containers) {
  */
 func Logout(w http.ResponseWriter, r *http.Request, c *services.Containers) {
   c.Session.Unset("user")
+  fmt.Println("Success")
   http.Redirect(w, r, "/login", 302)
+}
+
+/**
+ * User settings
+ */
+func UserSettings(w http.ResponseWriter, r *http.Request, c *services.Containers) {
+  c.Page.Title = "User settings"
+}
+
+/**
+ * View Profile
+ */
+func UserView(w http.ResponseWriter, r *http.Request, c *services.Containers) {
+  id := c.GetParamByType(services.TypedRequestParam{ Name: "id", Type: "int", DefaultValue: nil }).(int)
+  var user models.User
+  c.DB.Find(&user, id)
+
+  if user.ID < 1 {
+    c.Page.Data["notFound"] = true
+  } else {
+    c.Page.Data["user"] = user
+  }
+  c.Page.Title = "View user profile"
 }

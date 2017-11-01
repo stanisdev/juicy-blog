@@ -20,15 +20,19 @@ type Containers struct {
   Page Page
   Session SessionManager
   BadRequest string
+  UrlIsRestricted bool
 }
 
 /**
- * Container's methods
+ * Set flash message
  */
 func (c *Containers) SetFlash(value string) {
   c.Session.Set("flash", value)
 }
 
+/**
+ * Get flash message
+ */
 func (c *Containers) GetFlash() (string, bool) {
   value, exists := c.Session.Get("flash")
   if exists == true {
@@ -66,4 +70,11 @@ func (c *Containers) GetParamByType(data TypedRequestParam) (result interface{})
       }
   }
   return
+}
+
+/**
+ * To confirm middleware successfully passing checking
+ */
+func (c *Containers) Next() {
+  c.UrlIsRestricted = false
 }

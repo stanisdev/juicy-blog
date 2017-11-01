@@ -166,19 +166,3 @@ func ArticleRemovePost(w http.ResponseWriter, r *http.Request, c *services.Conta
   }
   http.Redirect(w, r, "/articles", 302)
 }
-
-/**
- * View Profile
- */
-func ProfileView(w http.ResponseWriter, r *http.Request, c *services.Containers) {
-  id := c.GetParamByType(services.TypedRequestParam{ Name: "id", Type: "int", DefaultValue: nil }).(int)
-  var user models.User
-  c.DB.Find(&user, id)
-
-  if user.ID < 1 {
-    c.Page.Data["notFound"] = true
-  } else {
-    c.Page.Data["user"] = user
-  }
-  c.Page.Title = "View user profile"
-}

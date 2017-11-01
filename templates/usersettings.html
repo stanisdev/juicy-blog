@@ -1,0 +1,67 @@
+{{ define "content" }}
+
+<div class="login align-center">
+  <form class="form-horizontal" method="post" action="/articles/new">
+    <fieldset>
+
+      <div class="form-group">
+        <label for="name" class="col-lg-2 control-label">Name</label>
+        <div class="col-lg-10">
+          <input type="text" class="form-control" id="name" name="name" value="{{ .User.Name }}" placeholder="Name">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="email" class="col-lg-2 control-label">Email</label>
+        <div class="col-lg-10">
+          <input type="text" class="form-control" id="email" name="email" value="{{ .User.Email }}" placeholder="Email">
+        </div>
+      </div>
+
+      <div class="checkbox" style="margin: 0 0 9px 88px;">
+        <label>
+          <input id="allow_change_password" onchange="change_password(this)" type="checkbox"> Change password
+        </label>
+      </div>
+
+      <div class="form-group">
+        <label for="password" class="col-lg-2 control-label">Password</label>
+        <div class="col-lg-10">
+          <input type="password" class="form-control" id="password" name="password" disabled="disabled" placeholder="Password">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="password_confirm" class="col-lg-2 control-label">Confirm</label>
+        <div class="col-lg-10">
+          <input type="password" class="form-control" id="password_confirm" name="password_confirm" disabled="disabled"  placeholder="Confirm password">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <div class="col-lg-10 col-lg-offset-2">
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </div>
+    </fieldset>
+  </form>
+</div>
+
+<script>
+  const password = document.getElementById('password');
+  const password_confirm = document.getElementById('password_confirm');
+  function change_password(e) {
+    if (e.checked) {
+      password.removeAttribute('disabled');
+      password_confirm.removeAttribute('disabled');
+    } else {
+      password.setAttribute('disabled', 'disabled');
+      password_confirm.setAttribute('disabled', 'disabled');
+    }
+  };
+</script>
+
+{{ end }}
+{{ define "resources" }}
+  <!-- Define script or styles here -->
+{{ end }}

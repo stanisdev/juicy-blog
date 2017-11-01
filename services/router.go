@@ -17,12 +17,17 @@ import (
 )
 
 type Router struct {
-  Handlers map[string] map[string] RouterHandler
+  Handlers map[string] map[string] RouterData
   Config *Config
   ProjectDir string
 }
 
 type RouterHandler func(http.ResponseWriter, *http.Request, *Containers)
+
+type RouterData struct {
+  Handler RouterHandler
+  Middlewares []func(*Containers)
+}
 
 type Page struct {
   Title string
@@ -37,10 +42,6 @@ type Config struct {
   DbUser string `json:"db_user"`
   DbPass string `json:"db_pass"`
   UrlsWithoutTemplate []string `json:"urls_without_template"`
-  ProtectedUrls []struct{
-    Url string
-    Method string
-  } `json:"protected_urls"`
 }
 
 /**
@@ -80,24 +81,36 @@ func (r *Router) Init() {
  */
 func (r *Router) defineHandler(url string) {
   if len(r.Handlers[url]) < 1 {
-    r.Handlers[url] = make(map[string]RouterHandler)
+    r.Handlers[url] = make(map[string]RouterData)
   }
 }
 
 /**
  * Adding GET handler
  */
-func (r *Router) GET(url string, fn RouterHandler) {
+func (r *Router) GET(url string, fn RouterHandler, middlewares ...func(*Containers)) {
   r.defineHandler(url)
-  r.Handlers[url]["GET"] = fn
+  routerData := RouterData{
+    Handler: fn,
+  }
+  if len(middlewares) > 0 {
+    routerData.Middlewares = middlewares
+  }
+  r.Handlers[url]["GET"] = routerData
 }
 
 /**
  * Adding POST handler
  */
-func (r *Router) POST(url string, fn RouterHandler) {
+func (r *Router) POST(url string, fn RouterHandler, middlewares ...func(*Containers)) {
   r.defineHandler(url)
-  r.Handlers[url]["POST"] = fn
+  routerData := RouterData{
+    Handler: fn,
+  }
+  if len(middlewares) > 0 {
+    routerData.Middlewares = middlewares
+  }
+  r.Handlers[url]["POST"] = routerData
 }
 
 /**
@@ -150,11 +163,13 @@ func (self *Router) handler(w http.ResponseWriter, r *http.Request) {
     }
   }
   // Get necessary handler
-  handler, isHandlerExists := handlersByUrlPattern[r.Method]
+  routerData, isHandlerExists := handlersByUrlPattern[r.Method]
   if !isHandlerExists {
     self.notFound(w)
     return
   }
+  handler := &routerData.Handler
+
   // Connect to DB
   dbConnection := ConnectToDatabase(self.Config)
 
@@ -167,26 +182,32 @@ func (self *Router) handler(w http.ResponseWriter, r *http.Request) {
     Session: SessionManager{},
   }
   container.Session.Start(w, r)
-
-  // Prepare info for template
-  handlerName := runtime.FuncForPC(reflect.ValueOf(handler).Pointer()).Name()
-  handlerName = handlerName[strings.LastIndex(handlerName, ".") + 1:]
   container.Auth()
 
-  // Check restricted urls
-  for _, value := range self.Config.ProtectedUrls {
-    if value.Url == url && value.Method == r.Method && !container.Page.User.Authorized() {
+  // Middlewares
+  middlewares := routerData.Middlewares
+  if len(middlewares) > 0 {
+    for _, middleware := range middlewares { // Run every middleware
+      container.UrlIsRestricted = true
+      middleware(container)
+    }
+    if container.UrlIsRestricted { // Check successfully
       self.notFound(w)
       return
     }
   }
+
+  // Prepare info for template
+  handlerName := runtime.FuncForPC(reflect.ValueOf(*handler).Pointer()).Name()
+  handlerName = handlerName[strings.LastIndex(handlerName, ".") + 1:]
+
   defer func() {
     if message := recover(); message != nil {
       w.WriteHeader(http.StatusBadRequest)
       fmt.Fprint(w, message)
     }
   }()
-  handler(w, r, container)
+  (*handler)(w, r, container) // Run url-handler
 
   // Some intolerable errors
   if len(container.BadRequest) > 0 {

@@ -2,17 +2,5 @@
   "db_name": "blog",
   "db_user": "root",
   "db_pass": "root",
-  "urls_without_template": ["/logout"],
-  "protected_urls": [
-    {
-      "url": "/articles/new",
-      "method": "GET"
-    }, {
-      "url": "/articles/new",
-      "method": "POST"
-    }, {
-      "url": "/logout",
-      "method": "GET"
-    }
-  ]
+  "urls_without_template": ["/logout"]
 }
