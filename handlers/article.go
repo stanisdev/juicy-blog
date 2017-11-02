@@ -76,15 +76,16 @@ func ArticleNew(w http.ResponseWriter, r *http.Request, c *services.Containers) 
 func ArticleNewPost(w http.ResponseWriter, r *http.Request, c *services.Containers) {
   r.ParseForm()
   var article models.Article
-  article.UserID = c.Page.User.ID
+  article.UserID = c.User.ID
   if hasError, message := services.ValidateModel(&article, r.PostForm); hasError == true {
-    c.SetFlash(message)
+    c.SetFlash(message, "danger")
     http.Redirect(w, r, "/articles/new", 302)
   } else {
     if err := c.DB.Create(&article).Error; err != nil {
-      c.SetFlash("Article cannot be created")
+      c.SetFlash("Article cannot be created", "danger")
       http.Redirect(w, r, "/articles/new", 302)
     } else {
+      c.SetFlash("Article was created", "info")
       http.Redirect(w, r, "/article/" + strconv.Itoa(int(article.ID)), 302)
     }
   }
@@ -104,7 +105,7 @@ func ArticleView(w http.ResponseWriter, r *http.Request, c *services.Containers)
   } else {
     c.Page.Title = article.Title
     c.Page.Data["article"] = article
-    c.Page.Data["canEdit"] = article.Userid == c.Page.User.ID
+    c.Page.Data["canEdit"] = article.Userid == c.User.ID
   }
 }
 
@@ -116,7 +117,7 @@ func ArticleEdit(w http.ResponseWriter, r *http.Request, c *services.Containers)
   var article models.Article
   c.DB.Find(&article, id)
 
-  if article.ID < 1 || article.UserID != c.Page.User.ID {
+  if article.ID < 1 || article.UserID != c.User.ID {
     c.Page.Title = "Not allowed to edit"
     c.Page.Data["isResctrictedEdit"] = true
   } else {
@@ -132,8 +133,8 @@ func ArticleEditPost(w http.ResponseWriter, r *http.Request, c *services.Contain
   id := c.GetParamByType(services.TypedRequestParam{ Name: "id", Type: "int", DefaultValue: nil }).(int)
   var article models.Article
   c.DB.Find(&article, id)
-  if article.ID < 1 || article.UserID != c.Page.User.ID {
-    c.SetFlash("Not allowed to edit")
+  if article.ID < 1 || article.UserID != c.User.ID {
+    c.SetFlash("Not allowed to edit", "danger")
     http.Redirect(w, r, "/articles", 302)
     return
   }
@@ -141,12 +142,13 @@ func ArticleEditPost(w http.ResponseWriter, r *http.Request, c *services.Contain
   article.Title = r.FormValue("title")
   article.Content = r.FormValue("content")
   if hasError, message := services.ValidateModel(&article, r.PostForm); hasError == true {
-    c.SetFlash(message)
+    c.SetFlash(message, "danger")
   } else {
     c.DB.Save(&article)
     id = int(article.ID) // Because: https://github.com/jinzhu/gorm/blob/master/main.go#L390
+    c.SetFlash("Article was edited", "info")
   }
-  http.Redirect(w, r, "/article/" + strconv.Itoa(id) + "/edit", 302)
+  http.Redirect(w, r, "/article/" + strconv.Itoa(id), 302)
 }
 
 /**
@@ -157,11 +159,13 @@ func ArticleRemovePost(w http.ResponseWriter, r *http.Request, c *services.Conta
   var article models.Article
   c.DB.Find(&article, id)
 
-  if article.ID < 1 || article.UserID != c.Page.User.ID {
-    c.SetFlash("Not allowed to remove")
+  if article.ID < 1 || article.UserID != c.User.ID {
+    c.SetFlash("Not allowed to remove", "danger")
   } else {
     if err := c.DB.Unscoped().Delete(&article).Error; err != nil {
-      c.SetFlash("Article was not removed")
+      c.SetFlash("Article was not removed", "danger")
+    } else {
+      c.SetFlash("Article was removed", "info")
     }
   }
   http.Redirect(w, r, "/articles", 302)

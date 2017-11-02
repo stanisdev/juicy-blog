@@ -53,3 +53,27 @@ func (sm *SessionManager) Get(key string) (string, bool) {
 func (sm *SessionManager) Unset(key string) {
   sm.client.HDel(sm.sid, key)
 }
+
+func (sm *SessionManager) SetMany(values map[string]string) {
+  sm.client.HMSet(sm.sid, values)
+}
+
+func (sm *SessionManager) GetMany(keys ...string) ([]string, bool) {
+  data := sm.client.HMGet(sm.sid, keys...)
+  var values []interface{} = data.Val()
+  var result []string
+  var isEmpty bool = true
+  for _, element := range values {
+    if element != nil {
+      result = append(result, element.(string))
+      isEmpty = false
+    } else {
+      result = append(result, "")
+    }
+  }
+  return result, isEmpty
+}
+
+func (sm *SessionManager) UnsetMany(keys ...string) {
+  sm.client.HDel(sm.sid, keys...)
+}

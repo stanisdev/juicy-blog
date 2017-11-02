@@ -5,7 +5,7 @@ import (
 )
 
 func Auth(c *services.Containers) {
-  if c.Page.User.Authorized() {
+  if c.User.Authorized() {
     c.Next()
   }
 }

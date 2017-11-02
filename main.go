@@ -30,6 +30,8 @@ func main()  {
   router.POST("/article/:id/edit", handlers.ArticleEditPost)
   router.POST("/article/:id/remove", handlers.ArticleRemovePost)
   router.GET("/user/settings", handlers.UserSettings, middlewares.Auth)
+  router.POST("/user/settings/save", handlers.UserSettingsSave, middlewares.Auth)
+  router.POST("/user/password/change", handlers.UserPasswordChange, middlewares.Auth)
   router.GET("/user/:id", handlers.UserView)
   router.Run()
 }

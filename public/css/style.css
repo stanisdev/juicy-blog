@@ -4,7 +4,7 @@ div.login {
   margin-top: 50px;
 }
 
-.alert-danger {
+.alert-danger, .alert-info {
   width: 500;
 }
 

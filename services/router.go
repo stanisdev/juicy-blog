@@ -29,9 +29,14 @@ type RouterData struct {
   Middlewares []func(*Containers)
 }
 
+type Flash struct {
+  Message template.HTML
+  State string
+}
+
 type Page struct {
   Title string
-  Flash template.HTML
+  Flash Flash
   Url string
   User models.User
   Data map[string]interface{}
@@ -223,9 +228,12 @@ func (self *Router) handler(w http.ResponseWriter, r *http.Request) {
         return
       }
     }
-    message, hasFlash := container.GetFlash()
+    message, state, hasFlash := container.GetFlash()
     if (hasFlash == true) {
-      container.Page.Flash = template.HTML(message)
+      container.Page.Flash = Flash {
+        Message: template.HTML(message),
+        State: state,
+      }
     }
     container.Page.Url = url
     self.loadTemplate(strings.ToLower(handlerName), w, &container.Page)

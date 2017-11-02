@@ -12,7 +12,7 @@ import (
  * Login page
  */
 func Login(w http.ResponseWriter, r *http.Request, c *services.Containers) {
-  if c.Page.User.Authorized() {
+  if c.User.Authorized() {
     http.Redirect(w, r, "/", 302)
     return
   }
@@ -24,23 +24,23 @@ func Login(w http.ResponseWriter, r *http.Request, c *services.Containers) {
  * Login (POST)
  */
 func LoginPost(w http.ResponseWriter, r *http.Request, c *services.Containers) {
-  if c.Page.User.Authorized() {
+  if c.User.Authorized() {
     http.Redirect(w, r, "/", 302)
     return
   }
   r.ParseForm()
   data := r.Form
-  _, email := data["email"];
-  _, password := data["password"];
+  _, email := data["email"]
+  _, password := data["password"]
   if !email || len(r.FormValue("email")) < 1 || !password || len(r.FormValue("password")) < 1 {
-    c.SetFlash("Email or Password was not specified")
+    c.SetFlash("Email or Password was not specified", "danger")
     http.Redirect(w, r, "/login", 302)
     return
   }
   var user models.User
   c.DB.First(&user, "email = ?", data["email"])
   if user.ID < 1 || !user.ComparePassword(r.FormValue("password")) {
-    c.SetFlash("Incorrect Email or Password")
+    c.SetFlash("Incorrect Email or Password", "danger")
     http.Redirect(w, r, "/login", 302)
     return
   }
@@ -62,6 +62,46 @@ func Logout(w http.ResponseWriter, r *http.Request, c *services.Containers) {
  */
 func UserSettings(w http.ResponseWriter, r *http.Request, c *services.Containers) {
   c.Page.Title = "User settings"
+}
+
+/**
+ * Save user's settings
+ */
+func UserSettingsSave(w http.ResponseWriter, r *http.Request, c *services.Containers) {
+  r.ParseForm()
+  var user models.User
+
+  if hasError, message := services.ValidateModel(&user, r.PostForm); hasError == true {
+    c.SetFlash(message, "danger")
+  } else {
+    fmt.Println(c.User.Name)
+    user.ID = c.User.ID
+    c.DB.Save(&user)
+    c.SetFlash("Settings was updated", "info")
+  }
+  http.Redirect(w, r, "/user/settings", 302)
+}
+
+/**
+ * Change user's password
+ */
+func UserPasswordChange(w http.ResponseWriter, r *http.Request, c *services.Containers) {
+  r.ParseForm()
+  password := r.FormValue("password")
+  confirm := r.FormValue("password_confirm")
+  if len(password) < 1 {
+    c.SetFlash("Password value is empty", "danger")
+    http.Redirect(w, r, "/user/settings", 302)
+    return
+  }
+  if password != confirm {
+    c.SetFlash("Password and Confirm do not match", "danger")
+    http.Redirect(w, r, "/user/settings", 302)
+    return
+  }
+  c.User.ChangePassword(password, c.DB)
+  c.SetFlash("Password was changed", "info")
+  http.Redirect(w, r, "/user/settings", 302)
 }
 
 /**

@@ -36,10 +36,10 @@
     </nav>
 
     <div class="container">
-      {{ if .Flash }}
-      <div class="alert alert-dismissible alert-danger align-center" id="flash">
+      {{ if .Flash.Message }}
+      <div class="alert alert-dismissible alert-{{ .Flash.State }} align-center" id="flash">
         <button type="button" id="closeFlash" class="close" data-dismiss="alert">&times;</button>
-        <strong>{{ .Flash }}</strong>
+        <strong>{{ .Flash.Message }}</strong>
       </div>
       {{ end }}
       {{ template "content" . }}

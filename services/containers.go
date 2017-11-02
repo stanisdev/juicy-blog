@@ -21,32 +21,34 @@ type Containers struct {
   Session SessionManager
   BadRequest string
   UrlIsRestricted bool
+  User models.User
 }
 
 /**
  * Set flash message
  */
-func (c *Containers) SetFlash(value string) {
-  c.Session.Set("flash", value)
+func (c *Containers) SetFlash(value string, state string) {
+  c.Session.SetMany(map[string]string { "flash": value, "state": state })
 }
 
 /**
  * Get flash message
  */
-func (c *Containers) GetFlash() (string, bool) {
-  value, exists := c.Session.Get("flash")
-  if exists == true {
-    c.Session.Unset("flash")
-    return value, true
+func (c *Containers) GetFlash() (string, string, bool) {
+  data, isEmpty := c.Session.GetMany("flash", "state")
+  if !isEmpty {
+    c.Session.UnsetMany("flash", "state")
+    return data[0], data[1], true
   } else {
-    return "", false
+    return "", "", false
   }
 }
 
 func (c *Containers) Auth() {
   userId, isAuth := c.Session.Get("user")
   if isAuth == true {
-    c.DB.Select("id, name, email").First(&c.Page.User, userId)
+    c.DB.Select("id, name, email").First(&c.User, userId)
+    c.Page.User = c.User
   }
 }
 

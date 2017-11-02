@@ -1,7 +1,7 @@
 {{ define "content" }}
 
 <div class="login align-center">
-  <form class="form-horizontal" method="post" action="/articles/new">
+  <form class="form-horizontal" method="post" action="/user/settings/save">
     <fieldset>
 
       <div class="form-group">
@@ -17,6 +17,18 @@
           <input type="text" class="form-control" id="email" name="email" value="{{ .User.Email }}" placeholder="Email">
         </div>
       </div>
+
+      <div class="form-group">
+        <div class="col-lg-10 col-lg-offset-2">
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </div>
+    </fieldset>
+  </form>
+
+  <!-- Password -->
+  <form class="form-horizontal" method="post" action="/user/password/change">
+    <fieldset>
 
       <div class="checkbox" style="margin: 0 0 9px 88px;">
         <label>
@@ -40,23 +52,29 @@
 
       <div class="form-group">
         <div class="col-lg-10 col-lg-offset-2">
-          <button type="submit" class="btn btn-primary">Save</button>
+          <button type="submit" id="save_new_password" disabled="disabled" class="btn btn-primary">Change</button>
         </div>
       </div>
     </fieldset>
   </form>
+  <!-- Password END -->
+
 </div>
 
 <script>
   const password = document.getElementById('password');
   const password_confirm = document.getElementById('password_confirm');
+  const save_new_password = document.getElementById('save_new_password');
+
   function change_password(e) {
     if (e.checked) {
       password.removeAttribute('disabled');
       password_confirm.removeAttribute('disabled');
+      save_new_password.removeAttribute('disabled');
     } else {
       password.setAttribute('disabled', 'disabled');
       password_confirm.setAttribute('disabled', 'disabled');
+      save_new_password.setAttribute('disabled', 'disabled');
     }
   };
 </script>
