@@ -79,14 +79,14 @@ func ArticleNewPost(w http.ResponseWriter, r *http.Request, c *services.Containe
   article.UserID = c.User.ID
   if hasError, message := services.ValidateModel(&article, r.PostForm); hasError == true {
     c.SetFlash(message, "danger")
-    http.Redirect(w, r, "/articles/new", 302)
+    c.Redirect("/articles/new")
   } else {
     if err := c.DB.Create(&article).Error; err != nil {
       c.SetFlash("Article cannot be created", "danger")
-      http.Redirect(w, r, "/articles/new", 302)
+      c.Redirect("/articles/new")
     } else {
       c.SetFlash("Article was created", "info")
-      http.Redirect(w, r, "/article/" + strconv.Itoa(int(article.ID)), 302)
+      c.Redirect("/article/" + strconv.Itoa(int(article.ID)))
     }
   }
 }
@@ -135,7 +135,7 @@ func ArticleEditPost(w http.ResponseWriter, r *http.Request, c *services.Contain
   c.DB.Find(&article, id)
   if article.ID < 1 || article.UserID != c.User.ID {
     c.SetFlash("Not allowed to edit", "danger")
-    http.Redirect(w, r, "/articles", 302)
+    c.Redirect("/articles")
     return
   }
   r.ParseForm()
@@ -148,7 +148,7 @@ func ArticleEditPost(w http.ResponseWriter, r *http.Request, c *services.Contain
     id = int(article.ID) // Because: https://github.com/jinzhu/gorm/blob/master/main.go#L390
     c.SetFlash("Article was edited", "info")
   }
-  http.Redirect(w, r, "/article/" + strconv.Itoa(id), 302)
+  c.Redirect("/article/" + strconv.Itoa(id))
 }
 
 /**
@@ -168,5 +168,5 @@ func ArticleRemovePost(w http.ResponseWriter, r *http.Request, c *services.Conta
       c.SetFlash("Article was removed", "info")
     }
   }
-  http.Redirect(w, r, "/articles", 302)
+  c.Redirect("/articles")
 }

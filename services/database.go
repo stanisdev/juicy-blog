@@ -19,8 +19,10 @@ func ConnectToDatabase(c *Config) *gorm.DB  {
 
 func DatabaseMigrate(c *Config) {
   con := ConnectToDatabase(c)
-  con.AutoMigrate(&models.User{}, &models.Article{})
+  con.AutoMigrate(&models.User{}, &models.Article{}, &models.Subscriber{})
   con.Model(&models.Article{}).AddForeignKey("user_id", "users(id)", "CASCADE", "CASCADE")
+  con.Model(&models.Subscriber{}).AddForeignKey("user_id", "users(id)", "CASCADE", "CASCADE")
+  con.Model(&models.Subscriber{}).AddForeignKey("subscriber_id", "users(id)", "CASCADE", "CASCADE")
 }
 
 func ImportDemoFixtures(c *Config)  {

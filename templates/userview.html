@@ -1,5 +1,5 @@
 {{ define "content" }}
-  
+
   {{ if .Data.notFound }}
     User does not exist
   {{ else }}
@@ -10,6 +10,14 @@
     Email: {{ .Data.user.Email }}
     <br/>
     Registered: {{ DateFormat .Data.user.CreatedAt }}
+
+    <br><br>
+    {{ if ne .User.ID .Data.user.ID }}
+      <a href="/user/{{ .Data.user.ID }}/subscribing" class="btn btn-{{ if .Data.isSubscribed }}danger{{ else }}success{{ end }}">
+        {{ if .Data.isSubscribed }}Uns{{ else }}S{{ end }}ubscribe
+      </a>
+    {{ end }}
+
   {{ end }}
 
 {{ end }}

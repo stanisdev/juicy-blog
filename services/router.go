@@ -46,7 +46,6 @@ type Config struct {
   DbName string `json:"db_name"`
   DbUser string `json:"db_user"`
   DbPass string `json:"db_pass"`
-  UrlsWithoutTemplate []string `json:"urls_without_template"`
 }
 
 /**
@@ -185,6 +184,8 @@ func (self *Router) handler(w http.ResponseWriter, r *http.Request) {
     Models: models.DatabaseStaticMethods{ DB: dbConnection },
     Page: Page{ Data: make(map[string] interface{}) },
     Session: SessionManager{},
+    ResponseWriter: &w,
+    Request: r,
   }
   container.Session.Start(w, r)
   container.Auth()
@@ -223,10 +224,8 @@ func (self *Router) handler(w http.ResponseWriter, r *http.Request) {
 
   // Render template
   if r.Method == "GET" {
-    for _, value := range self.Config.UrlsWithoutTemplate {
-      if value == url {
-        return
-      }
+    if container.NoTemplate {
+      return
     }
     message, state, hasFlash := container.GetFlash()
     if (hasFlash == true) {

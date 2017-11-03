@@ -6,6 +6,8 @@
     <link rel="stylesheet" type="text/css" href="/public/css/bootstrap.min.css" />
     <link rel="stylesheet" type="text/css" href="/public/css/style.css" />
     <script src="/public/js/script.js"></script>
+    <script src="/public/js/jquery.min.js"></script>
+    <script src="/public/js/bootstrap.min.js"></script>
     {{ template "resources" . }}
   </head>
   <body>
@@ -18,8 +20,24 @@
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
           <ul class="nav navbar-nav">
             <li {{if eq .Url "/" }}class="active"{{end}}><a href="/">Home</a></li>
-            <li {{ if and (IsArticles .Url) (ne .Url "/articles/new") }}class="active"{{end}}><a href="/articles">Articles</a></li>
-            {{ if gt .User.ID 0 }}<li {{if eq .Url "/articles/new" }}class="active"{{end}}><a href="/articles/new">New</a></li>{{end}}
+
+            <li class="dropdown{{ if IsArticles .Url }} active{{ end }}">
+              <a class="dropdown-toggle" data-toggle="dropdown" href="#" id="themes">Articles <span class="caret"></span></a>
+              <ul class="dropdown-menu" aria-labelledby="themes">
+
+                <li {{if eq .Url "/articles" }}class="active"{{end}}><a href="/articles">All</a></li>
+
+                {{ if gt .User.ID 0 }}
+                <li {{if eq .Url "/articles/subscribed" }}class="active"{{end}}><a href="/articles/subscribed">Subscribed</a></li>
+
+                <li class="divider"></li>
+
+                <li {{if eq .Url "/articles/new" }}class="active"{{end}}><a href="/articles/new">Create</a></li>
+                {{end}}
+
+              </ul>
+            </li>
+
           </ul>
           <ul class="nav navbar-nav navbar-right">
             {{ if gt .User.ID 0 }}

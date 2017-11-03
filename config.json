@@ -1,6 +1,5 @@
 {
   "db_name": "blog",
   "db_user": "root",
-  "db_pass": "root",
-  "urls_without_template": ["/logout"]
+  "db_pass": "root"
 }

@@ -5,6 +5,7 @@ import (
   "github.com/stanisdev/juicy-blog/models"
   "strconv"
   "strings"
+  "net/http"
 )
 
 type TypedRequestParam struct {
@@ -22,6 +23,9 @@ type Containers struct {
   BadRequest string
   UrlIsRestricted bool
   User models.User
+  ResponseWriter *http.ResponseWriter
+  Request *http.Request
+  NoTemplate bool
 }
 
 /**
@@ -42,6 +46,11 @@ func (c *Containers) GetFlash() (string, string, bool) {
   } else {
     return "", "", false
   }
+}
+
+func (c *Containers) Redirect(url string) {
+  c.NoTemplate = true
+  http.Redirect(*c.ResponseWriter, c.Request, url, 302)
 }
 
 func (c *Containers) Auth() {

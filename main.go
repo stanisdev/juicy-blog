@@ -33,5 +33,6 @@ func main()  {
   router.POST("/user/settings/save", handlers.UserSettingsSave, middlewares.Auth)
   router.POST("/user/password/change", handlers.UserPasswordChange, middlewares.Auth)
   router.GET("/user/:id", handlers.UserView)
+  router.GET("/user/:id/subscribing", handlers.UserSubscribing)
   router.Run()
 }

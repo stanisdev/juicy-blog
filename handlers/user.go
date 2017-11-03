@@ -13,7 +13,7 @@ import (
  */
 func Login(w http.ResponseWriter, r *http.Request, c *services.Containers) {
   if c.User.Authorized() {
-    http.Redirect(w, r, "/", 302)
+    c.Redirect("/")
     return
   }
   c.Page.Title = "Login to Blog"
@@ -25,7 +25,7 @@ func Login(w http.ResponseWriter, r *http.Request, c *services.Containers) {
  */
 func LoginPost(w http.ResponseWriter, r *http.Request, c *services.Containers) {
   if c.User.Authorized() {
-    http.Redirect(w, r, "/", 302)
+    c.Redirect("/")
     return
   }
   r.ParseForm()
@@ -34,27 +34,27 @@ func LoginPost(w http.ResponseWriter, r *http.Request, c *services.Containers) {
   _, password := data["password"]
   if !email || len(r.FormValue("email")) < 1 || !password || len(r.FormValue("password")) < 1 {
     c.SetFlash("Email or Password was not specified", "danger")
-    http.Redirect(w, r, "/login", 302)
+    c.Redirect("/login")
     return
   }
   var user models.User
   c.DB.First(&user, "email = ?", data["email"])
   if user.ID < 1 || !user.ComparePassword(r.FormValue("password")) {
     c.SetFlash("Incorrect Email or Password", "danger")
-    http.Redirect(w, r, "/login", 302)
+    c.Redirect("/login")
     return
   }
   c.Session.Set("user", strconv.Itoa(int(user.ID)))
-  http.Redirect(w, r, "/", 302)
+  c.Redirect("/")
 }
 
 /**
  * Logout page
  */
 func Logout(w http.ResponseWriter, r *http.Request, c *services.Containers) {
+  c.NoTemplate = true
   c.Session.Unset("user")
-  fmt.Println("Success")
-  http.Redirect(w, r, "/login", 302)
+  c.Redirect("/login")
 }
 
 /**
@@ -79,7 +79,7 @@ func UserSettingsSave(w http.ResponseWriter, r *http.Request, c *services.Contai
     c.DB.Save(&user)
     c.SetFlash("Settings was updated", "info")
   }
-  http.Redirect(w, r, "/user/settings", 302)
+  c.Redirect("/user/settings")
 }
 
 /**
@@ -91,17 +91,43 @@ func UserPasswordChange(w http.ResponseWriter, r *http.Request, c *services.Cont
   confirm := r.FormValue("password_confirm")
   if len(password) < 1 {
     c.SetFlash("Password value is empty", "danger")
-    http.Redirect(w, r, "/user/settings", 302)
-    return
-  }
-  if password != confirm {
+  } else if password != confirm {
     c.SetFlash("Password and Confirm do not match", "danger")
-    http.Redirect(w, r, "/user/settings", 302)
+  } else {
+    c.User.ChangePassword(password, c.DB)
+    c.SetFlash("Password was changed", "info")
+  }
+  c.Redirect("/user/settings")
+}
+
+/**
+ * Subscribe to User's articles
+ */
+func UserSubscribing(w http.ResponseWriter, r *http.Request, c *services.Containers) {
+  userId := c.GetParamByType(services.TypedRequestParam{ Name: "id", Type: "int", DefaultValue: nil }).(int)
+  if uint(userId) == c.User.ID {
+    c.SetFlash("It's disallow to subscribe to myself", "danger")
+    c.Redirect("/")
     return
   }
-  c.User.ChangePassword(password, c.DB)
-  c.SetFlash("Password was changed", "info")
-  http.Redirect(w, r, "/user/settings", 302)
+  var user models.User
+  c.DB.Find(&user, userId) // Вынести в middleware
+  c.Page.Title = "Subscribe to user"
+
+  if user.ID < 1 {
+    return
+  }
+  subscribingPage := "/user/" + strconv.Itoa(int(userId))
+  if c.Models.SubscriberExists(uint(userId), c.User.ID) {
+    c.DB.Where("user_id = ? AND subscriber_id = ?", userId, c.User.ID).Delete(models.Subscriber{})
+    c.SetFlash("You unsubscribed successfully", "info")
+    c.Redirect(subscribingPage)
+    return
+  }
+  newRecord := models.Subscriber{ UserID: uint(userId), SubscriberID: c.User.ID }
+  c.DB.Create(&newRecord)
+  c.SetFlash("You subscribed successfully", "info")
+  c.Redirect(subscribingPage)
 }
 
 /**
@@ -118,4 +144,5 @@ func UserView(w http.ResponseWriter, r *http.Request, c *services.Containers) {
     c.Page.Data["user"] = user
   }
   c.Page.Title = "View user profile"
+  c.Page.Data["isSubscribed"] = c.Models.SubscriberExists(uint(id), c.User.ID)
 }
