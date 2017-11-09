@@ -26,6 +26,7 @@ type Containers struct {
   ResponseWriter *http.ResponseWriter
   Request *http.Request
   NoTemplate bool
+  SpecifiedTemplate string
 }
 
 /**

@@ -8,15 +8,16 @@ import (
   "math"
   "strconv"
   "time"
+  "fmt"
 )
 
 /**
  * Index page
  */
 func Index(w http.ResponseWriter, r *http.Request, c *services.Containers) {
-  var articlesCount, usersCount int
+  var articlesCount, usersCount, newArticlesCount int
   waitGroup := sync.WaitGroup{}
-  waitGroup.Add(2)
+  waitGroup.Add(3)
   go func() {
     c.DB.Model(models.Article{}).Count(&articlesCount)
     waitGroup.Done()
@@ -25,29 +26,44 @@ func Index(w http.ResponseWriter, r *http.Request, c *services.Containers) {
     c.DB.Model(models.User{}).Count(&usersCount)
     waitGroup.Done()
   }()
+  go func() {
+    c.DB.Model(models.NewArticlesSubscriber{}).Where("subscriber_id = ?", c.User.ID).Count(&newArticlesCount)
+    waitGroup.Done()
+  }()
   waitGroup.Wait()
   c.Page.Data["ArticlesCount"] = articlesCount
   c.Page.Data["UsersCount"] = usersCount
+  c.Page.Data["NewArticlesCount"] = newArticlesCount
   c.Page.Title = "Mutual Blog"
 }
 
-/**
- * Articles list
- */
+
 func Articles(w http.ResponseWriter, r *http.Request, c *services.Containers) {
   page := c.GetParamByType(services.TypedRequestParam{ Name: "page", Type: "int", DefaultValue: 1 }).(int)
   if page < 1 {
     c.BadRequest = "Page must be greater then zero"
     return
   }
+  filter := r.URL.Query().Get("filter")
+  c.Page.Data["filter"] = filter
+  if len(filter) < 1 {
+    filter = "common"
+  }
   var offset int = 0
   if page > 1 {
     offset = (page - 1) * 5
   }
-  var count int
-  c.DB.Model(models.Article{}).Count(&count)
+  queryParams := map[string]int {
+    "limit": 5,
+    "offset": offset,
+    "currUserId": int(c.User.ID),
+  }
+  data := c.Models.GetArticles(queryParams, filter)
+  var count int = data["count"].(int)
+
   c.Page.Data["count"] = count
   c.Page.Title = "Articles"
+
   if count < 1 {
     return
   }
@@ -59,8 +75,8 @@ func Articles(w http.ResponseWriter, r *http.Request, c *services.Containers) {
     pagesCount := math.Ceil(float64(count) / 5)
     c.Page.Data["pagination"] = services.MakePagination(page, int(pagesCount))
   }
-  articles := c.Models.GetArticles(5, offset)
-  c.Page.Data["articles"] = articles
+  c.Page.Data["articles"] = data["articles"]
+  c.Page.Data["filterCaption"] = data["caption"]
 }
 
 /**
@@ -85,6 +101,9 @@ func ArticleNewPost(w http.ResponseWriter, r *http.Request, c *services.Containe
       c.SetFlash("Article cannot be created", "danger")
       c.Redirect("/articles/new")
     } else {
+      var subscriberIds []uint = c.Models.FindAllSubscriberIds(c.User.ID)
+      c.Models.AddNotifications(subscriberIds, article.ID)
+
       c.SetFlash("Article was created", "info")
       c.Redirect("/article/" + strconv.Itoa(int(article.ID)))
     }
@@ -168,5 +187,6 @@ func ArticleRemovePost(w http.ResponseWriter, r *http.Request, c *services.Conta
       c.SetFlash("Article was removed", "info")
     }
   }
+  fmt.Println("Done")
   c.Redirect("/articles")
 }

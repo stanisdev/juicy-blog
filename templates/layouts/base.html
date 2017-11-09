@@ -28,7 +28,7 @@
                 <li {{if eq .Url "/articles" }}class="active"{{end}}><a href="/articles">All</a></li>
 
                 {{ if gt .User.ID 0 }}
-                <li {{if eq .Url "/articles/subscribed" }}class="active"{{end}}><a href="/articles/subscribed">Subscribed</a></li>
+                <li {{if eq .Url "/articles?filter=subscribed" }}class="active"{{end}}><a href="/articles?filter=subscribed">Subscribed</a></li>
 
                 <li class="divider"></li>
 

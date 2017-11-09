@@ -203,10 +203,6 @@ func (self *Router) handler(w http.ResponseWriter, r *http.Request) {
     }
   }
 
-  // Prepare info for template
-  handlerName := runtime.FuncForPC(reflect.ValueOf(*handler).Pointer()).Name()
-  handlerName = handlerName[strings.LastIndex(handlerName, ".") + 1:]
-
   defer func() {
     if message := recover(); message != nil {
       w.WriteHeader(http.StatusBadRequest)
@@ -235,7 +231,16 @@ func (self *Router) handler(w http.ResponseWriter, r *http.Request) {
       }
     }
     container.Page.Url = url
-    self.loadTemplate(strings.ToLower(handlerName), w, &container.Page)
+
+    // Prepare info for template
+    var templateName string
+    if len(container.SpecifiedTemplate) < 1 {
+      handlerName := runtime.FuncForPC(reflect.ValueOf(*handler).Pointer()).Name()
+      templateName = handlerName[strings.LastIndex(handlerName, ".") + 1:]
+    } else {
+      templateName = container.SpecifiedTemplate
+    }
+    self.loadTemplate(strings.ToLower(templateName), w, &container.Page)
   }
 }
 

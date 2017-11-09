@@ -7,6 +7,10 @@
   <br/>
   Articles: {{ .Data.ArticlesCount }}
   <br/>
+  {{ if gt .Data.NewArticlesCount 0 }}
+    <span style="color: red">New: {{ .Data.NewArticlesCount }}</span>
+    <br/>
+  {{ end }}
   Users: {{ .Data.UsersCount }}
 {{ end }}
 {{ define "resources" }}
