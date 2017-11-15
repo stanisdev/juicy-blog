@@ -22,3 +22,15 @@ div.pg {
 .fs13 {
   font-size: 13px;
 }
+
+.comment-container {
+  width: 50%;
+  padding: 10px;
+  border: 1px solid #e2e2e2;
+  margin-top: 15px;
+}
+
+.comment-form {
+  width: 50%;
+  margin-top: 25px;
+}

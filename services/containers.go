@@ -27,6 +27,7 @@ type Containers struct {
   Request *http.Request
   NoTemplate bool
   SpecifiedTemplate string
+  Config *Config
 }
 
 /**

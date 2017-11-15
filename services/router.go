@@ -46,6 +46,7 @@ type Config struct {
   DbName string `json:"db_name"`
   DbUser string `json:"db_user"`
   DbPass string `json:"db_pass"`
+  CommentsByPage int `json:"comments_by_page"`
 }
 
 /**
@@ -186,6 +187,7 @@ func (self *Router) handler(w http.ResponseWriter, r *http.Request) {
     Session: SessionManager{},
     ResponseWriter: &w,
     Request: r,
+    Config: self.Config, 
   }
   container.Session.Start(w, r)
   container.Auth()

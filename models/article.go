@@ -25,21 +25,30 @@ func (sm *DatabaseStaticMethods) GetArticles(params map[string]int, filter strin
     Userid int;
     Username string;
     IsNew int
-   }
+  }
   var count int
   limit := params["limit"]
   offset := params["offset"]
   currUserId := params["currUserId"]
   result := make(map[string]interface{})
   var caption string
+  var newArticleIds []int
 
   switch filter {
     case "subscribed":
       // Get articles
       sm.DB.Table("articles a").
-        Select("a.id, a.title, SUBSTR(a.content, 1, 190) AS content, a.created_at, u.name username, u.id userid").
+        Select(`
+          a.id,
+          a.title,
+          SUBSTR(a.content, 1, 190) AS content,
+          a.created_at,
+          u.name username,
+          u.id userid,
+          IF (nus.id IS NULL, 0, 1 ) AS is_new`).
         Joins("LEFT JOIN subscribers sb ON a.user_id = sb.user_id").
         Joins("LEFT JOIN users u ON a.user_id = u.id").
+        Joins("LEFT JOIN new_articles_subscribers nus ON a.id = nus.article_id AND nus.subscriber_id = ?", currUserId).
         Where("sb.subscriber_id = ? AND a.user_id != ?", currUserId, currUserId).
         Order("a.updated_at, a.created_at DESC").
         Limit(limit).
@@ -76,6 +85,16 @@ func (sm *DatabaseStaticMethods) GetArticles(params map[string]int, filter strin
       sm.DB.Model(Article{}).Count(&count)
       caption = "all"
   }
+  for _, value := range articles {
+    if value.IsNew > 0 {
+      newArticleIds = append(newArticleIds, value.Id)
+    }
+  }
+  // Remove notifications
+  if len(newArticleIds) > 0 {
+    sm.DB.Unscoped().Delete(NewArticlesSubscriber{}, "article_id in (?) AND subscriber_id = ?", newArticleIds, currUserId)
+  }
+
   result["articles"] = articles
   result["count"] = count
   result["caption"] = caption

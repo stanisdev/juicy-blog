@@ -1,18 +1,39 @@
 {{ define "content" }}
-  
-  {{ if .Data.notFound }} 
+
+  {{ if .Data.notFound }}
     Article does not exist
-  {{else}} 
-  
+  {{else}}
+
     <h2>{{.Data.article.Title}}</h2>
     <div>{{ ChangeToBr .Data.article.Content}}</div>
     <br><br>
-    Author: <a href="/profile/{{ .Data.article.Userid }}">{{ .Data.article.Username }}</a>, Published: <span class="fs13">{{ DateFormat .Data.article.CreatedAt }}</span>, 
+    Author: <a href="/profile/{{ .Data.article.Userid }}">{{ .Data.article.Username }}</a>, Published: <span class="fs13">{{ DateFormat .Data.article.CreatedAt }}</span>,
     {{ if .Data.canEdit }}
       <form style="display: inline" id="removeArticle" action="/article/{{ .Data.article.ID }}/remove" method="post">
         <a href="/article/{{ .Data.article.ID }}/edit">Edit</a>, <a href="#" onclick="document.getElementById('removeArticle').submit();">Remove</a>
       </form>
     {{end}}
+
+    <!-- Comments -->
+    <hr>
+    Comments total count: {{ .Data.commentsCount }}
+
+    {{ range $comment := .Data.comments }}
+      <div class="comment-container">
+        Author: <a href="/user/{{ $comment.UserId }}" target="_blank">{{ $comment.UserName }}</a>
+        <br/>
+        {{ $comment.Content }}
+      </div>
+    {{ end }}
+
+    <div class="comment-form">
+      <h5>Comment</h5>
+      <form action="" method="post" action="/article/{{ .Data.article.ID }}/comment">
+        <textarea class="form-control" rows="3" id="content" name="content" style="height: 150px;"></textarea>
+        <button style="margin-top: 5px;" type="submit" class="btn btn-primary">Send</button>
+      </form>
+    </div>
+
   {{end}}
 
 {{ end }}

@@ -121,11 +121,15 @@ func ArticleView(w http.ResponseWriter, r *http.Request, c *services.Containers)
   if article.ID < 1 {
     c.Page.Title = "Article not found"
     c.Page.Data["notFound"] = true
-  } else {
-    c.Page.Title = article.Title
-    c.Page.Data["article"] = article
-    c.Page.Data["canEdit"] = article.Userid == c.User.ID
+    return
   }
+  comments := c.Models.GetComments(article.ID, c.Config.CommentsByPage)
+
+  c.Page.Data["article"] = article
+  c.Page.Data["canEdit"] = article.Userid == c.User.ID
+  c.Page.Data["comments"] = comments
+  c.Page.Title = article.Title
+  c.Page.Data["commentsCount"] = c.Models.GetCommentsCount(article.ID)
 }
 
 /**
