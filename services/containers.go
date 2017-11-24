@@ -28,6 +28,8 @@ type Containers struct {
   NoTemplate bool
   SpecifiedTemplate string
   Config *Config
+  IntUrlParams map[string]int
+  MiddlewaresData map[string]interface{}
 }
 
 /**

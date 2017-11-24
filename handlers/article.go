@@ -114,7 +114,7 @@ func ArticleNewPost(w http.ResponseWriter, r *http.Request, c *services.Containe
  * View Article (GET)
  */
 func ArticleView(w http.ResponseWriter, r *http.Request, c *services.Containers) {
-  id := c.GetParamByType(services.TypedRequestParam{ Name: "id", Type: "int", DefaultValue: nil }).(int)
+  id, _ := c.IntUrlParams["id"]
   var article struct{ID uint; Title string; Content string; CreatedAt time.Time; Userid uint; Username string}
   c.Models.FindArticleById(&article, id)
 
@@ -124,23 +124,26 @@ func ArticleView(w http.ResponseWriter, r *http.Request, c *services.Containers)
     return
   }
   comments := c.Models.GetComments(article.ID, c.Config.CommentsByPage)
+  commentsCount := c.Models.GetCommentsCount(article.ID)
+  if commentsCount > c.Config.CommentsByPage {
+    // We need to make pagination
+  }
 
   c.Page.Data["article"] = article
   c.Page.Data["canEdit"] = article.Userid == c.User.ID
   c.Page.Data["comments"] = comments
   c.Page.Title = article.Title
-  c.Page.Data["commentsCount"] = c.Models.GetCommentsCount(article.ID)
+  c.Page.Data["commentsCount"] = commentsCount
+  c.Page.Data["currUserId"] = c.User.ID
 }
 
 /**
  * Edit Article (GET)
  */
 func ArticleEdit(w http.ResponseWriter, r *http.Request, c *services.Containers) {
-  id := c.GetParamByType(services.TypedRequestParam{ Name: "id", Type: "int", DefaultValue: nil }).(int)
-  var article models.Article
-  c.DB.Find(&article, id)
+  article := c.MiddlewaresData["article"].(models.Article)
 
-  if article.ID < 1 || article.UserID != c.User.ID {
+  if article.UserID != c.User.ID {
     c.Page.Title = "Not allowed to edit"
     c.Page.Data["isResctrictedEdit"] = true
   } else {
@@ -150,13 +153,39 @@ func ArticleEdit(w http.ResponseWriter, r *http.Request, c *services.Containers)
 }
 
 /**
+ * Add comment (POST)
+ */
+func ArticleAddCommentPost(w http.ResponseWriter, r *http.Request, c *services.Containers) {
+  article := c.MiddlewaresData["article"].(models.Article)
+  r.ParseForm()
+
+  comment := models.Comment {
+    Content: r.PostFormValue("content"),
+    ArticleID: article.ID,
+    UserID: c.User.ID,
+  }
+  r.PostForm.Del("ArticleID") // For securing
+  r.PostForm.Del("UserID")
+  if hasError, message := services.ValidateModel(&comment, r.PostForm); hasError == true {
+    c.SetFlash(message, "danger")
+  } else {
+    if err := c.DB.Create(&comment).Error; err != nil {
+      c.SetFlash("Comment cannot be added", "danger")
+    } else {
+      c.SetFlash("Comment was added", "info")
+    }
+  }
+  c.Redirect("/article/" + strconv.Itoa(int(article.ID)))
+}
+
+/**
  * Edit Article (POST)
  */
 func ArticleEditPost(w http.ResponseWriter, r *http.Request, c *services.Containers) {
-  id := c.GetParamByType(services.TypedRequestParam{ Name: "id", Type: "int", DefaultValue: nil }).(int)
-  var article models.Article
-  c.DB.Find(&article, id)
-  if article.ID < 1 || article.UserID != c.User.ID {
+  id, _ := c.IntUrlParams["id"]
+  article := c.MiddlewaresData["article"].(models.Article)
+
+  if article.UserID != c.User.ID {
     c.SetFlash("Not allowed to edit", "danger")
     c.Redirect("/articles")
     return
@@ -178,11 +207,9 @@ func ArticleEditPost(w http.ResponseWriter, r *http.Request, c *services.Contain
  * Remove Article (POST)
  */
 func ArticleRemovePost(w http.ResponseWriter, r *http.Request, c *services.Containers) {
-  id := c.GetParamByType(services.TypedRequestParam{ Name: "id", Type: "int", DefaultValue: nil }).(int)
-  var article models.Article
-  c.DB.Find(&article, id)
+  article := c.MiddlewaresData["article"].(models.Article)
 
-  if article.ID < 1 || article.UserID != c.User.ID {
+  if article.UserID != c.User.ID {
     c.SetFlash("Not allowed to remove", "danger")
   } else {
     if err := c.DB.Unscoped().Delete(&article).Error; err != nil {

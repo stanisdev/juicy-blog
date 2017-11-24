@@ -104,7 +104,7 @@ func UserPasswordChange(w http.ResponseWriter, r *http.Request, c *services.Cont
  * Subscribe to User's articles
  */
 func UserSubscribing(w http.ResponseWriter, r *http.Request, c *services.Containers) {
-  userId := c.GetParamByType(services.TypedRequestParam{ Name: "id", Type: "int", DefaultValue: nil }).(int)
+  userId, _ := c.IntUrlParams["id"]
   if uint(userId) == c.User.ID {
     c.SetFlash("It's disallow to subscribe to myself", "danger")
     c.Redirect("/")
@@ -134,7 +134,7 @@ func UserSubscribing(w http.ResponseWriter, r *http.Request, c *services.Contain
  * View Profile
  */
 func UserView(w http.ResponseWriter, r *http.Request, c *services.Containers) {
-  id := c.GetParamByType(services.TypedRequestParam{ Name: "id", Type: "int", DefaultValue: nil }).(int)
+  id, _ := c.IntUrlParams["id"]
   var user models.User
   c.DB.Find(&user, id)
 

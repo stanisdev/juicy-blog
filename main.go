@@ -9,7 +9,7 @@ package main
 import (
   "github.com/stanisdev/juicy-blog/services"
   "github.com/stanisdev/juicy-blog/handlers"
-  "github.com/stanisdev/juicy-blog/middlewares"
+  mw "github.com/stanisdev/juicy-blog/middlewares"
 )
 
 func main()  {
@@ -17,22 +17,31 @@ func main()  {
     Handlers: make(map[string] map[string] services.RouterData),
   }
   router.Init()
+  IdIntMiddleware := mw.ValidateUrl(map[string]string{ "id": "int" })
 
   router.GET("/", handlers.Index)
   router.GET("/login", handlers.Login)
   router.POST("/login", handlers.LoginPost)
-  router.GET("/logout", handlers.Logout, middlewares.Auth)
+  router.GET("/logout", handlers.Logout, mw.Auth)
   router.GET("/articles/:page?", handlers.Articles)
-  router.GET("/articles/new", handlers.ArticleNew, middlewares.Auth)
-  router.POST("/articles/new", handlers.ArticleNewPost, middlewares.Auth)
-  router.GET("/article/:id", handlers.ArticleView)
-  router.GET("/article/:id/edit", handlers.ArticleEdit)
-  router.POST("/article/:id/edit", handlers.ArticleEditPost)
-  router.POST("/article/:id/remove", handlers.ArticleRemovePost)
-  router.GET("/user/settings", handlers.UserSettings, middlewares.Auth)
-  router.POST("/user/settings/save", handlers.UserSettingsSave, middlewares.Auth)
-  router.POST("/user/password/change", handlers.UserPasswordChange, middlewares.Auth)
-  router.GET("/user/:id", handlers.UserView)
-  router.GET("/user/:id/subscribing", handlers.UserSubscribing)
+  router.GET("/articles/new", handlers.ArticleNew, mw.Auth)
+  router.POST("/articles/new", handlers.ArticleNewPost, mw.Auth)
+  router.GET("/article/:id", handlers.ArticleView, IdIntMiddleware, mw.GetAritcle)
+
+  router.GET("/article/:id/edit",
+    handlers.ArticleEdit,
+    mw.Auth,
+    IdIntMiddleware,
+    mw.GetAritcle,
+  )
+  router.POST("/article/:id/edit", handlers.ArticleEditPost, mw.Auth, IdIntMiddleware, mw.GetAritcle)
+  router.POST("/article/:id/remove", handlers.ArticleRemovePost, mw.Auth, IdIntMiddleware, mw.GetAritcle)
+
+  router.GET("/user/settings", handlers.UserSettings, mw.Auth)
+  router.POST("/user/settings/save", handlers.UserSettingsSave, mw.Auth)
+  router.POST("/user/password/change", handlers.UserPasswordChange, mw.Auth)
+  router.GET("/user/:id", handlers.UserView, IdIntMiddleware)
+  router.GET("/user/:id/subscribing", handlers.UserSubscribing, mw.Auth, IdIntMiddleware)
+  router.POST("/article/:id/comment", handlers.ArticleAddCommentPost, mw.Auth, IdIntMiddleware, mw.GetAritcle)
   router.Run()
 }

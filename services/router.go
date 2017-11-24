@@ -187,10 +187,19 @@ func (self *Router) handler(w http.ResponseWriter, r *http.Request) {
     Session: SessionManager{},
     ResponseWriter: &w,
     Request: r,
-    Config: self.Config, 
+    Config: self.Config,
+    IntUrlParams: make(map[string]int),
+    MiddlewaresData: make(map[string]interface{}),
   }
   container.Session.Start(w, r)
   container.Auth()
+
+  defer func() {
+    if message := recover(); message != nil {
+      w.WriteHeader(http.StatusBadRequest)
+      fmt.Fprint(w, message)
+    }
+  }()
 
   // Middlewares
   middlewares := routerData.Middlewares
@@ -205,12 +214,6 @@ func (self *Router) handler(w http.ResponseWriter, r *http.Request) {
     }
   }
 
-  defer func() {
-    if message := recover(); message != nil {
-      w.WriteHeader(http.StatusBadRequest)
-      fmt.Fprint(w, message)
-    }
-  }()
   (*handler)(w, r, container) // Run url-handler
 
   // Some intolerable errors

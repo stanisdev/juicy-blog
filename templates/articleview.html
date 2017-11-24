@@ -20,6 +20,9 @@
 
     {{ range $comment := .Data.comments }}
       <div class="comment-container">
+        <div style="float: right;"><!-- Do only for comment's author -->
+          <a href="#">Remove</a>
+        </div>
         Author: <a href="/user/{{ $comment.UserId }}" target="_blank">{{ $comment.UserName }}</a>
         <br/>
         {{ $comment.Content }}
@@ -28,7 +31,7 @@
 
     <div class="comment-form">
       <h5>Comment</h5>
-      <form action="" method="post" action="/article/{{ .Data.article.ID }}/comment">
+      <form method="post" action="/article/{{ .Data.article.ID }}/comment">
         <textarea class="form-control" rows="3" id="content" name="content" style="height: 150px;"></textarea>
         <button style="margin-top: 5px;" type="submit" class="btn btn-primary">Send</button>
       </form>
